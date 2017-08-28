@@ -1,2 +1,2 @@
 # sundstrom-scExtensions
-extensions to SuperCollider
+Extensions to SuperCollider
