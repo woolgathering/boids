@@ -48,7 +48,7 @@ An exciter. Need to be reworked, has a tendency to clip.
 
 
 ### TimeStretch and TimeStretchStereo
-Stretches a buffer in the time domain. TimeStretch accepts a mono signal, TimeStretchStereo accepts two buffers representing the L and R channels. Rate and transposition are independent.
+Stretches a buffer in the time domain. TimeStretch accepts a mono signal, TimeStretchStereo accepts two buffers representing the L and R channels. Rate and transposition are independent. This pseudo-UGen loops automatically.
 #### TimeStretch
 `.ar(buff, rate = 1, trans = 1, winSize = 0.2, timeDisp = 0.2, start = 0, end = 1, mul = 1, add = 0)`
 
@@ -58,6 +58,7 @@ Stretches a buffer in the time domain. TimeStretch accepts a mono signal, TimeSt
   - __winSize__: the size of the window with which we read through the file. Can dramatically change the way it sounds.
   - __timeDisp__: random offset of the grains, max is winSize. Can help with phasing artifacts.
   - __start__: where to start in the file. 0 is the beginning, 1 is the end.
+  - __start__: where to end in the file. 0 is the beginning, 1 is the end.
 
 #### TimeStretchStereo
 If using a stereo signal, one must use Buffer.loadChannel for each channel to get into a different buffer.
@@ -71,6 +72,7 @@ If using a stereo signal, one must use Buffer.loadChannel for each channel to ge
   - __winSize__: the size of the window with which we read through the file. Can dramatically change the way it sounds.
   - __timeDisp__: random offset of the grains, max is winSize. Can help with phasing artifacts.
   - __start__: where to start in the file. 0 is the beginning, 1 is the end.
+  - __start__: where to end in the file. 0 is the beginning, 1 is the end.
 
 ## Extensions
 
