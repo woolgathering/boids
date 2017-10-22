@@ -58,7 +58,7 @@ Stretches a buffer in the time domain. TimeStretch accepts a mono signal, TimeSt
   - __winSize__: the size of the window with which we read through the file. Can dramatically change the way it sounds.
   - __timeDisp__: random offset of the grains, max is winSize. Can help with phasing artifacts.
   - __start__: where to start in the file. 0 is the beginning, 1 is the end.
-  - __start__: where to end in the file. 0 is the beginning, 1 is the end.
+  - __end__: where to end in the file. 0 is the beginning, 1 is the end.
 
 #### TimeStretchStereo
 If using a stereo signal, one must use Buffer.loadChannel for each channel to get into a different buffer.
@@ -72,7 +72,7 @@ If using a stereo signal, one must use Buffer.loadChannel for each channel to ge
   - __winSize__: the size of the window with which we read through the file. Can dramatically change the way it sounds.
   - __timeDisp__: random offset of the grains, max is winSize. Can help with phasing artifacts.
   - __start__: where to start in the file. 0 is the beginning, 1 is the end.
-  - __start__: where to end in the file. 0 is the beginning, 1 is the end.
+  - __end__: where to end in the file. 0 is the beginning, 1 is the end.
 
 ## Extensions
 
