@@ -4,7 +4,7 @@
   yesterday {
     var year, month, day, dayOfWeek, newYears, leapYear;
 
-    newYears = (this.month==1) && (this.day==1); // answer true if it's new years day
+    newYears = (this.month==1) and: (this.day==1); // answer true if it's new years day
 
     year = if(newYears)
       {
@@ -18,18 +18,9 @@
       {
         if((year/100).isInteger)
           {
-            if((year/400).isInteger)
-              {
-                true;
-              } {
-                false;
-              };
-          } {
-            false;
-          };
-      } {
-        false;
-      };
+            if((year/400).isInteger) {true} {false};
+          } {false};
+      } {false};
 
     month = if(this.day==1)
       {
@@ -71,7 +62,7 @@
   tomorrow {
     var year, month, day, dayOfWeek, newYearsEve, leapYear;
 
-    newYearsEve = (this.month==11) && (this.day==31); // answer true if it's new years eve
+    newYearsEve = (this.month==12) and: (this.day==31); // answer true if it's new years eve
 
     year = if(newYearsEve)
       {
@@ -85,18 +76,9 @@
       {
         if((year/100).isInteger)
           {
-            if((year/400).isInteger)
-              {
-                true;
-              } {
-                false;
-              };
-          } {
-            false;
-          };
-      } {
-        false;
-      };
+            if((year/400).isInteger) {true} {false};
+          } {false};
+      } {false};
 
     month = if(this.day==31)
       {
@@ -104,7 +86,7 @@
           {1} // it's December 31, so tomorrow is January
           {this.month+1}; // it's the 31st so we know it's the end of some month, so get next month
       } {
-        if((this.day==30) && ([8,3,5,10].includes(this.month)))
+        if((this.day==30) and: ([8,3,5,10].includes(this.month)))
           {
             this.month+1; // it's the 30th of a month that only has 30 days, so get next month
           } {
@@ -123,6 +105,5 @@
 
     ^Date(year, month, day, this.hour, this.minute, this.second, dayOfWeek, this.rawSeconds); // return exactly 24 hours ago
   }
-
 
 }
