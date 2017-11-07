@@ -86,7 +86,7 @@
           {1} // it's December 31, so tomorrow is January
           {this.month+1}; // it's the 31st so we know it's the end of some month, so get next month
       } {
-        if((this.day==30) and: ([8,3,5,10].includes(this.month)))
+        if((this.day==30) and: (#[8,3,5,10].includes(this.month)))
           {
             this.month+1; // it's the 30th of a month that only has 30 days, so get next month
           } {

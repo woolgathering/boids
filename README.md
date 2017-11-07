@@ -77,7 +77,7 @@ If using a stereo signal, one must use Buffer.loadChannel for each channel to ge
 ## Extensions
 
 ### File
-`.include(path)`
+`*.include(path)`
 
 Class method. Read a file as a String and evaluate it, returning the result. Hack for dynamic includes.
 
