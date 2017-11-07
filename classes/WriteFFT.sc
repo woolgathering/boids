@@ -12,7 +12,7 @@ WriteFFT {
     if(buff.isNil) {^"Need an input sound file!".error}; // return an error if our buff is nil
     server = Server.default;
     soundInfo = SoundFile.openRead(buff.path);
-    outPath = outPath ? PathName.tmp++"fftData.scpv"; // output path
+    outPath = outPath ?? {PathName.tmp++"fftData.scpv"}; // output path
     frameSize = frameSize ? 1024; // fft frame size
     hop = hop ? 0.5; // hop size
     winType = winType ? 0; // -1: rectangular, 0: sine, 1: Hann
@@ -32,7 +32,7 @@ WriteFFT {
       	.verbosity_(-1)
         .sampleRate_(soundInfo.sampleRate),
       action: {
-        freeables.do(_.free); // free the freeables
+        // freeables.do(_.free); // free the freeables
       }
     );
   }
@@ -95,7 +95,7 @@ WriteFFT {
 
   free {
     soundInfo.close;
-    // freeables.do(_.free);
+    freeables.do(_.free);
   }
 
 }

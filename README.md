@@ -10,6 +10,32 @@ A simple CPU meter. Needs some work...
   - __serverArg__: the server we want to track
   - __intervalArg__: the interval of time to measure the CPU in seconds
 
+### WriteFFT
+A class to write an FFT data file in non-real time. Requires [TimeStretch](#TimeStretch) pseudo-UGen.
+
+`.new(buff, outPath, frameSize = 1024, hop = 0.5, winType = 0)`
+
+  - __buff__: a mono buffer to read
+  - __outPath__: a path to output the file. Easiest to use the .scpv extension to keep track. Defaults to /tmp/fftData.scpv.
+  - __frameSize__: analysis frame size for FFT analysis.
+  - __hop__: percentage of overlap (hop) from frame to frame.
+  - __winType__: the type of window to use in the analysis. 1 is rectangular, 0 is sine, -1 is Hann.
+
+#### Other Important Values (see [TimeStretch](#TimeStretch))
+  - __rate__: the rate at which to read the sound file (independent of transposition)
+  - __trans__: transposition of the file (independent of rate)
+  - __winSize__: the size of the window in TimeStretch
+
+#### Usage
+```
+// load a buffer
+b = Buffer.readChannel(s, "/yer/path/here", channels: [0]);
+
+// create an instance
+f = WriteFFT.new(b, "yer/out/path.scpv");
+f.process; // run it
+```
+
 ## Pseudo Ugens
 ### AutoBFormat_fromStereo
 Creates a B-format signal from a stereo signal. Accepts a couple arguments about movement; range from 0 to 1.
@@ -47,7 +73,7 @@ An exciter. Need to be reworked, has a tendency to clip.
   - __gain__: the gain to apply to the signal that is passed through the filter
 
 
-### TimeStretch and TimeStretchStereo
+### TimeStretch and TimeStretchStereo <a name="TimeStretch"></a>
 Stretches a buffer in the time domain. TimeStretch accepts a mono signal, TimeStretchStereo accepts two buffers representing the L and R channels. Rate and transposition are independent. This pseudo-UGen loops automatically.
 #### TimeStretch
 `.ar(buff, rate = 1, trans = 1, winSize = 0.2, timeDisp = 0.2, start = 0, end = 1, mul = 1, add = 0)`
