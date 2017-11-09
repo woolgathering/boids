@@ -34,7 +34,10 @@ b = Buffer.readChannel(s, "/yer/path/here", channels: [0]);
 // create an instance
 f = WriteFFT.new(b, "yer/out/path.scpv");
 f.process; // run it
+f.free; // free the buffers and other things
 ```
+#### Issues
+Beware buffer build up. Haven't quite figured out how to avoid it without having to call .free all the time.
 
 ## Pseudo Ugens
 ### AutoBFormat_fromStereo
@@ -100,7 +103,7 @@ If using a stereo signal, one must use Buffer.loadChannel for each channel to ge
   - __start__: where to start in the file. 0 is the beginning, 1 is the end.
   - __end__: where to end in the file. 0 is the beginning, 1 is the end.
 
-## Extensions
+## Class Extensions
 
 ### File
 `*.include(path)`

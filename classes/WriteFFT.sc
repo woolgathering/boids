@@ -2,7 +2,7 @@
 
 WriteFFT {
 
-  var <>buff, <>outPath, <>frameSize, <>hop, <>winType, <>winSize, <>rate, <>trans, sndBuff, <fftBuff, score, soundInfo, <server, freeables;
+  var <>buff, <>outPath, <>t, <>hop, <>winType, <>winSize, <>rate, <>trans, sndBuff, <fftBuff, score, soundInfo, <server, freeables;
 
   *new {|buff, outPath, frameSize, hop, winType|
     ^super.newCopyArgs(buff, outPath, frameSize, hop, winType).init;
@@ -54,7 +54,7 @@ WriteFFT {
         var sig, chain, localBuff;
         localBuff = LocalBuf(frameSize, 1); // a single channel
         Line.kr(1, 1, BufDur.kr(sndBuff) / rate, doneAction: 2); // a line to control the doneAction
-        sig = TimeStretch.ar(sndBuff, rate, trans, winSize, timeDisp: winSize); // stretch it out (if we need to)
+        sig = TimeStretch.ar(sndBuff, rate, trans, winSize, timeDisp: winSize) * 0.5; // stretch it out (if we need to)
         chain = FFT(localBuff, in: sig, hop: hop, wintype: winType, active: 1); // analyze
         chain = PV_RecordBuf(chain, recBuff, offset: 0, run: 1, loop: 0, hop: hop, wintype: winType); // record it
       }).send(server);
