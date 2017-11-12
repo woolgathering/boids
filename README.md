@@ -114,7 +114,7 @@ Class method. Read a file as a String and evaluate it, returning the result. Hac
 
 Returns the result of the evaluation.
 
-### Array
+### ArrayedCollection
 `.interpolate(array, steps = 5)`
 
 Interpolate linearly between two arrays of the same size, the receiver and _array_ in _steps_.
@@ -127,6 +127,17 @@ Returns an array of arrays including the receiver at index 0, and _array_ at ind
 `*.interpolate(thisArray, thatArray, steps = 5)`
 
 Class method of the same. Interpolates between _thisArray_ and _thatArray_ in _steps_.
+
+### Array
+`*.noiseInterpolate(start = 0, end = 1, size = 5, noise = 0.1)`
+
+Class method to create a new array starting at `start` and ending at `end` of `size` that interpolates linearly between the values. Add noise to the internal values (not the first or last index) using the `noise` argument as a percentage of value to add or subtract from that value.
+
+```
+// example:
+Array.noiseInterpolate(0,10,10,0.1).round(0.01);
+>>> [ 0, 1.17, 2.02, 3.39, 4.69, 5.44, 6.07, 7.65, 8.44, 10 ]
+```
 
 #### To Do
 - Allow for interpolation along a curve; i.e. non-linear interpolation
