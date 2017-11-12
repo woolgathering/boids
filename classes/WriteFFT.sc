@@ -2,7 +2,7 @@
 
 WriteFFT {
 
-  var <>buff, <>outPath, <>t, <>hop, <>winType, <>winSize, <>rate, <>trans, sndBuff, <fftBuff, score, soundInfo, <server, freeables;
+  var <>buff, <>outPath, <>frameSize, <>hop, <>winType, <>winSize, <>rate, <>trans, sndBuff, <fftBuff, score, soundInfo, <server, freeables;
 
   *new {|buff, outPath, frameSize, hop, winType|
     ^super.newCopyArgs(buff, outPath, frameSize, hop, winType).init;
