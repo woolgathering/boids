@@ -1,4 +1,4 @@
-Array + {
++ Array {
 
   // interpolate between two values, adding noise to the interpolated segments if desired.
   *noiseInterpolate {|start = 0, end = 1, size = 5, noise = 0.1|
