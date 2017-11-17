@@ -103,6 +103,14 @@ If using a stereo signal, one must use Buffer.loadChannel for each channel to ge
   - __start__: where to start in the file. 0 is the beginning, 1 is the end.
   - __end__: where to end in the file. 0 is the beginning, 1 is the end.
 
+### NoiseVol
+Controls volume using filtered noise. This causes the amplitude to not only become lower but also to 'crackle' like a broken/noisy signal or electricity. Multichannel signals would do well to use one of these on each channel.
+
+`.ar(in, level)`
+
+ - __in__: signal in
+ - __level__: 0-1
+
 ## Class Extensions
 
 ### File
