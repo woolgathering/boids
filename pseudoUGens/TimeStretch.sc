@@ -15,7 +15,7 @@ TimeStretch {
     sig = GrainBuf.ar(numChannels: 1,
       trigger: DelayN.kr(trig, winSize, TRand.kr(0,timeDisp,trig)), // randomly change the trigger to remove comb effect
       dur: winSize, sndbuf: buff, rate: trans, pos: pos, // other junk & try to minimize maxGrains
-      interp: 4, pan: 0, envbufnum: -1, maxGrains: (winSize.reciprocal*50).min(512), mul: mul*0.1, add: add);
+      interp: 4, pan: 0, envbufnum: -1, maxGrains: (winSize.reciprocal*50).min(512), mul: mul, add: add);
 
     ^sig; // return
 
@@ -40,12 +40,12 @@ TimeStretchStereo {
     sigL = GrainBuf.ar(numChannels: 1,
       trigger: DelayN.kr(trig, winSize, TRand.kr(0,timeDisp,trig)), // randomly change the trigger to remove comb effect
       dur: winSize, sndbuf: buffL, rate: trans, pos: pos, // other junk & try to minimize maxGrains
-      interp: 4, pan: 0, envbufnum: -1, maxGrains: (winSize.reciprocal*50).min(512), mul: mul*0.1, add: add);
+      interp: 4, pan: 0, envbufnum: -1, maxGrains: (winSize.reciprocal*50).min(512), mul: mul, add: add);
 
     sigR = GrainBuf.ar(numChannels: 1,
       trigger: DelayN.kr(trig, winSize, TRand.kr(0,timeDisp,trig)), // randomly change the trigger to remove comb effect
       dur: winSize, sndbuf: buffR, rate: trans, pos: pos, // other junk & try to minimize maxGrains
-      interp: 4, pan: 0, envbufnum: -1, maxGrains: (winSize.reciprocal*50).min(512), mul: mul*0.1, add: add);
+      interp: 4, pan: 0, envbufnum: -1, maxGrains: (winSize.reciprocal*50).min(512), mul: mul, add: add);
 
     ^[sigL, sigR]; // return
 

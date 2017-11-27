@@ -9,7 +9,7 @@
       val*noise.rand2 + val; // add some noise to the segments
     };
     tmp.do{|val, i| array[i+1] = val}; // return the values to the array
-    array; // return the array
+    ^array; // return the array
   }
 
 }

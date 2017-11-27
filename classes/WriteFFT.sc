@@ -30,7 +30,8 @@ WriteFFT {
       options: ServerOptions.new
       	.memSize_(32768)
       	.verbosity_(-1)
-        .sampleRate_(soundInfo.sampleRate),
+        .sampleRate_(soundInfo.sampleRate)
+        .numInputBusChannels_(1),
       action: {
         // freeables.do(_.free); // free the freeables
       }
