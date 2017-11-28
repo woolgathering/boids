@@ -41,7 +41,7 @@ WriteFFT {
   makeBuffBundle {
     var bundle;
     bundle = server.makeBundle(false, {
-      fftBuff = Buffer.alloc(server, soundInfo.duration.calcPVRecSize(frameSize, hop)); // buffer to store analysis
+      fftBuff = Buffer.alloc(server, (soundInfo.duration/rate).calcPVRecSize(frameSize, hop)); // buffer to store analysis
       sndBuff = Buffer.readChannel(server, buff.path, channels: [0]); // buffer containing the original sound.
       freeables.add(fftBuff, sndBuff);
     });
@@ -55,8 +55,8 @@ WriteFFT {
         var sig, chain, localBuff;
         localBuff = LocalBuf(frameSize, 1); // a single channel
         Line.kr(1, 1, BufDur.kr(sndBuff) / rate, doneAction: 2); // a line to control the doneAction
-        sig = TimeStretch.ar(sndBuff, rate, trans, winSize, timeDisp: winSize) * 0.5; // stretch it out (if we need to)
-        chain = FFT(localBuff, in: sig, hop: hop, wintype: winType, active: 1); // analyze
+        sig = TimeStretch.ar(sndBuff, rate, trans, winSize, timeDisp: winSize, mul: 0.1); // stretch it out (if we need to)
+        chain = FFT(localBuff, in: sig, hop: hop, wintype: winType, active: 1, winSize: frameSize); // analyze
         chain = PV_RecordBuf(chain, recBuff, offset: 0, run: 1, loop: 0, hop: hop, wintype: winType); // record it
       }).send(server);
     });
