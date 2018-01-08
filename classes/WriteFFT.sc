@@ -26,7 +26,7 @@ WriteFFT {
 
   process {
     this.makeScore;
-    score.recordNRT(PathName.tmp++"tmp.osc", "/dev/null", inputFilePath: sndBuff.path, sampleRate: soundInfo.sampleRate,
+    score.recordNRT(PathName.tmp++"tmp.osc", "/dev/null", sampleRate: soundInfo.sampleRate,
       options: ServerOptions.new
       	.memSize_(32768)
       	.verbosity_(-1)
