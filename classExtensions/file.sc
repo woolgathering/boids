@@ -1,18 +1,22 @@
 + File {
 
   // include a file.
-  *include {|path|
-    var file, envir;
+  *include {|path, envir|
+    var file, return;
     if(File.exists(path)) // check if we're talking about a real file
       {
         file = File.open(path,"r"); // read the file
-        envir = thisProcess.interpreter.interpret(file.readAllString); // interpret it as a string
+        if(envir.notNil) {
+          return = envir.use(thisProcess.interpreter.interpret(file.readAllString)); // interpret it in an environment
+        } {
+          return = thisProcess.interpreter.interpret(file.readAllString); // interpret it as a string
+        };
         file.close; // close the file
-        ^envir; // return our new environment
+        ^return; // return whatever our file returns
       } {
         ^"File at % does not exist!".format(path.quote).warn; // if it doesn't exist, throw a fit
       };
-    
+
   }
 
 }
