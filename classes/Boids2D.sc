@@ -82,7 +82,7 @@ Boids2D {
   fillBoidList {|num|
     // could instead pass an array of Nodes from which the NodeID's could be extracted and passed...
     num.do{
-      boidList.add(BoidUnit.rand(centerInstinct, innerDistance, matchVelocity, maxVelocity: maxVelocity*timestep)); // add a new Boid Unit
+      boidList.add(BoidUnit2D.rand(centerInstinct, innerDistance, matchVelocity, maxVelocity: maxVelocity*timestep)); // add a new Boid Unit
     };
   }
 
@@ -90,7 +90,7 @@ Boids2D {
     var initPos, boid;
     initPos = RealVector.rand2D(-10,10,-10,10).asRealVector2D; // get a random vector position
     initPos = centerOfMass + initPos.limit(maxVelocity*2); // place it near the center of the flock
-    boid = BoidUnit.new(pos: initPos, maxVelocity: maxVelocity*timestep); // make it
+    boid = BoidUnit2D.new(pos: initPos, maxVelocity: maxVelocity*timestep); // make it
     // if(nodeID.isNil) {boid.nodeID = nodeID};
     boidList.add(boid); // add it
   }
