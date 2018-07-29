@@ -3,6 +3,7 @@
   // include a file.
   *include {|path, envir|
     var file, return;
+    path = path.stripNewlines; // strip newlines (only in Atom...)
     if(File.exists(path)) // check if we're talking about a real file
       {
         file = File.open(path,"r"); // read the file
