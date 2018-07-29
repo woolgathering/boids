@@ -17,6 +17,8 @@ Flock {
   }
 
   init {
+    server = server ? Server.local; // default to localhost if nothing is passed in
+    if(server.serverRunning.not) {"Server is not running!".error; ^nil}; // yell if the server isn't running
     boids = Boids2D(numBoids, timestep: timestep); // make a Boids2D
     boids.addTarget([0,0], 0.05); // add a target at the origin (5% attraction)
     minGain = 0.05; // minGain for the scaling function in amplitude
@@ -26,7 +28,6 @@ Flock {
     this.prMakeDefaultFunc; // set the default function
     this.prMakeTask; // make the task
 
-    server = server ? Server.local; // default to localhost if nothing is passed in
     forkIfNeeded {
       server.loadDirectory(ReynoldsAlgorithms.synthDir++"boids"); // load the synthdefs
       server.sync;
