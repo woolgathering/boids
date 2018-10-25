@@ -176,8 +176,13 @@ Automator {
   }
 
   // show the GUI and allow editing
-  show {
+  show {|str|
+    if (str.notNil) {window.name = str.asString}; // give it a name
     window.front;
+  }
+
+  getEnv {
+    ^Env(floppedNodes[1], floppedNodes[0].differentiate[1..], curve);
   }
 
   // a function to evaluate when the envelope view is edited
