@@ -17,6 +17,7 @@
 Boids2D {
   var <>numBoids, <>timestep, <>centerInstinct, <>innerDistance, <>matchVelocity, <centerOfMass;
   var >boidList, <maxVelocity, <minSpace, targets, obstacles;
+  var <bounds, <innerBoundRatio, <useInnerBounds, <innerBounds;
 
   *new {|numBoids = 10, timestep = 0.5, centerInstinct = 1, innerDistance = 1, matchVelocity = 1|
     ^super.newCopyArgs(numBoids, timestep, centerInstinct, innerDistance, matchVelocity).init;
@@ -27,14 +28,18 @@ Boids2D {
     maxVelocity = 5; // speed limit in meters per second (need to multiply it by the timestep)
     minSpace = 1; // minmum distance between boids in a flock in meters
     centerOfMass = RealVector.zero(2).asRealVector2D; // init center of mass at the origin
-    this.fillBoidList(numBoids); // fill the list with boidse
+    bounds = [[-50,50], [-50,50]]; // set the default bounds
+    useInnerBounds = false; // default to not using the inner bounds
+    innerBoundRatio = 0.1; // default to 10%
+    innerBounds = innerBoundRatio * bounds; // for ease of getting and setting
+    this.prFillBoidList(numBoids); // fill the list with boids
 
     targets = List.new(0);
     obstacles = List.new(0);
   }
 
   // rule 1
-  getCenterOfMass {
+  prGetCenterOfMass {
     var sum = RealVector.zero(2).asRealVector2D; // a zero vector to add to
     boidList.do{|boid, i|
       sum = sum + boid.pos; // sum the values
@@ -48,7 +53,7 @@ Boids2D {
   }
 
   // rule 2
-  getInnerDistance {
+  prGetInnerDistance {
     boidList.do{|boid|
       var vec, dist;
       vec = RealVector.zero(2).asRealVector2D; // a new zero vector
@@ -67,7 +72,7 @@ Boids2D {
   }
 
   // rule 3
-  getVelocityMatch {
+  prGetVelocityMatch {
     var sum = RealVector.zero(2).asRealVector2D; // a new zero vector
     // sum the velocities
     boidList.do{|boid|
@@ -79,10 +84,15 @@ Boids2D {
     };
   }
 
-  fillBoidList {|num|
+  prFillBoidList {|num|
     // could instead pass an array of Nodes from which the NodeID's could be extracted and passed...
     num.do{
-      boidList.add(BoidUnit2D.rand(centerInstinct, innerDistance, matchVelocity, maxVelocity: maxVelocity*timestep)); // add a new Boid Unit
+      var boid;
+      boid = BoidUnit2D.rand(centerInstinct, innerDistance, matchVelocity, maxVelocity: maxVelocity*timestep)
+        .bounds_(bounds) // make it
+        .useInnerBounds_(useInnerBounds)
+        .innerBounds_(innerBounds);
+      boidList.add(boid); // add it to the list
     };
   }
 
@@ -90,8 +100,10 @@ Boids2D {
     var initPos, boid;
     initPos = RealVector.rand2D(-10,10,-10,10).asRealVector2D; // get a random vector position
     initPos = centerOfMass + initPos.limit(maxVelocity*2); // place it near the center of the flock
-    boid = BoidUnit2D.new(pos: initPos, maxVelocity: maxVelocity*timestep); // make it
-    // if(nodeID.isNil) {boid.nodeID = nodeID};
+    boid = BoidUnit2D.new(pos: initPos, maxVelocity: maxVelocity*timestep)
+      .bounds_(bounds) // make it
+      .useInnerBounds_(useInnerBounds)
+      .innerBounds_(innerBounds);
     boidList.add(boid); // add it
   }
 
@@ -108,9 +120,9 @@ Boids2D {
   }
 
   moveFlock {|func|
-    this.getCenterOfMass; // rule 1
-    this.getInnerDistance; // rule 2
-    this.getVelocityMatch; // rule 3
+    this.prGetCenterOfMass; // rule 1
+    this.prGetInnerDistance; // rule 2
+    this.prGetVelocityMatch; // rule 3
 
     // method to set tell all the boids to now calculate and move?
     boidList.do{|boid|
@@ -121,9 +133,9 @@ Boids2D {
 
   // calculate the new values but don't send them to the BoidUnits
   calcFlock {|func|
-    this.getCenterOfMass; // rule 1
-    this.getInnerDistance; // rule 2
-    this.getVelocityMatch; // rule 3
+    this.prGetCenterOfMass; // rule 1
+    this.prGetInnerDistance; // rule 2
+    this.prGetVelocityMatch; // rule 3
 
     func.(this); // evaluate the function while passing this instance
   }
@@ -134,15 +146,26 @@ Boids2D {
     };
   }
 
-  bounds {|xLen, yLen|
-    var rect;
-    if(xLen.isNil or: yLen.isNil) {"Missing a dimension: x = %, y = %".format(xLen, yLen).error; ^nil};
+  // creates a rectangle of size [dim]
+  bounds_ {|dim|
+    var rect, xLen, yLen;
+    if(dim.isArray) {
+      if(dim.size==2) {
+        // we're good
+        xLen = dim[0];
+        yLen = dim[1];
+      };
+    } {
+      "dim must be a two element array".error; // else something is wrong
+      ^nil; // return nill
+    };
 
     // create the bounds of a rectangle with the given dimensions with the origin at the center
     rect = [[-0.5*xLen, 0.5*xLen], [-0.5*yLen, 0.5*yLen]];
+    bounds = rect; // set the new bounds
     // set the bounds in each BoidUnit
     boidList.do{|boid|
-      boid.bounds = rect; // set it in each Boid
+      boid.bounds = bounds; // set it in each Boid
     };
   }
 
@@ -225,7 +248,25 @@ Boids2D {
 
   minSpace_ {|val|
     minSpace = val;
-    this.getInnerDistance;
+    this.prGetInnerDistance;
+  }
+
+  innerBoundRatio_ {|val|
+    if (val>0.95) {"Clipped innerBoundRatio to 0.95".warn}; // tell if we're doing something dumb
+    innerBoundRatio = val.clip(0,0.95); // clip it
+    innerBounds = bounds * innerBoundRatio; // for easer getting
+    boidList.do(_.innerBounds_(innerBounds)); // set it in the BoidUnits internally
+  }
+
+  useInnerBounds_ {|boolean|
+    useInnerBounds = boolean; // set it
+    boidList.do(_.useInnerBounds_(useInnerBounds)); // set it for each BoidUnit
+  }
+
+  // don't let us set the inner bounds manually (for now?)
+  innerBounds_ {
+    "set innerBounds with innerBoundRatio!".warn;
+    ^this;
   }
 
   /////////////////////////////
@@ -250,7 +291,7 @@ Boids2D {
 ////////////////////////////////////////////////////////////
 BoidUnit2D {
   var <>vel, <>pos, <maxVelocity, <nodeID, <centerOfMass;
-  var <>centerInstinct, <>innerDistance, <>matchVelocity, <>bounds;
+  var <>centerInstinct, <>innerDistance, <>matchVelocity, <bounds, <>useInnerBounds, <>innerBounds;
 
   // perhaps set an independence value, such that this weight value is the weight of a random vector added to the final
   // position of the boid? In that way, the vector calculated from the rest of the flock can be diminished and the
@@ -274,20 +315,47 @@ BoidUnit2D {
     innerDistance = args[1] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
     matchVelocity = args[2] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
 
-    centerInstinct = centerOfMass/100; // set this here
+    centerInstinct = centerOfMass/50; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
-    bounds = [[-100,100],[-100,100]]; // [ [xmin, xmax], [ymin, ymax]]
+    bounds = [[-25,25],[-25,25]]; // [ [xmin, xmax], [ymin, ymax]]
+    useInnerBounds = false; // default to not using an inner bound method
+    innerBounds = bounds * 0.1; // calculate the size as default
   }
 
   bound {
     var vec, thisX = 0, thisY = 0;
     // x position
-    if (pos.x < bounds[0][0]) {thisX = 2*maxVelocity};
-    if (pos.x > bounds[0][1]) {thisX = -2*maxVelocity};
+    if (pos.x < bounds[0][0]) {thisX = -2*maxVelocity};
+    if (pos.x > bounds[0][1]) {thisX = 2*maxVelocity};
     // y position
-    if (pos.y < bounds[1][0]) {thisY = 2*maxVelocity};
-    if (pos.y > bounds[1][1]) {thisY = -2*maxVelocity};
+    if (pos.y < bounds[1][0]) {thisY = -2*maxVelocity};
+    if (pos.y > bounds[1][1]) {thisY = 2*maxVelocity};
 
+    vec = RealVector2D.newFrom([thisX,thisY]);
+    pos = pos + vec; // add the vectors
+  }
+
+  // an inner bound. Useful when using as a spatializer
+  innerBound {
+    var vec, thisX = 0, thisY = 0;
+    // along the x-axis
+    if ((pos.x > innerBounds[0][0]) and: (pos.x < innerBounds[0][1])) {
+      if (pos.x >= 0) {
+        thisX = 2*maxVelocity; // move right
+      } {
+        thisX = -2*maxVelocity; // move left
+      };
+    };
+    // along the y-axis
+    if ((pos.y > innerBounds[1][0]) and: (pos.y < innerBounds[1][1])) {
+      if (pos.y >= 0) {
+        thisY = 2*maxVelocity; // move up
+      } {
+        thisY = -2*maxVelocity; // move down
+      };
+    };
+
+    // "Calculating inner bound...".postln;
     vec = RealVector2D.newFrom([thisX,thisY]);
     pos = pos + vec; // add the vectors
   }
@@ -296,11 +364,10 @@ BoidUnit2D {
     vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
     if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
     if (obstacles.isEmpty.not) {vel = vel + this.calcTargets(obstacles)}; // if there are obstacles, calculate the vector
-    vel = vel.limit(maxVelocity); // speed limit
-    // this.bound; // bound the coordinates
     pos = pos + vel; // get the new position
-    // pos = pos.clip(bounds[0][0],bounds[0][1]);
     this.bound; // bound the coordinates
+    if (useInnerBounds) {this.innerBound}; // only do the inner bounds when we want
+    vel = vel.limit(maxVelocity); // speed limit
   }
 
   getPanVals {
@@ -330,12 +397,16 @@ BoidUnit2D {
   centerOfMass_ {|vec|
     centerOfMass = vec; // get the perceived center of mass for this BoidUnit
     // each time we get a new center of mass, recalculate the first vector offset
-    centerInstinct = centerOfMass/100; // get the vector that moves it 1% toward the center of the flock (this can be weighted??)
+    centerInstinct = centerOfMass/50; // get the vector that moves it 1% toward the center of the flock (this can be weighted??)
   }
 
   maxVelocity_ {|val|
     maxVelocity = val; // set it
     vel = vel.limit(maxVelocity); // limit it if it's bigger
-    // this.moveBoid;
+  }
+
+  bounds_ {|val|
+    bounds = val;
+    innerBounds = bounds * innerBoundRatio;
   }
 }
