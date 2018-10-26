@@ -163,9 +163,11 @@ Boids2D {
     // create the bounds of a rectangle with the given dimensions with the origin at the center
     rect = [[-0.5*xLen, 0.5*xLen], [-0.5*yLen, 0.5*yLen]];
     bounds = rect; // set the new bounds
+    innerBounds = bounds * innerBoundRatio; // recompute the innerBounds
     // set the bounds in each BoidUnit
     boidList.do{|boid|
       boid.bounds = bounds; // set it in each Boid
+      boid.innerBounds = innerBounds;
     };
   }
 
@@ -341,17 +343,17 @@ BoidUnit2D {
     // along the x-axis
     if ((pos.x > innerBounds[0][0]) and: (pos.x < innerBounds[0][1])) {
       if (pos.x >= 0) {
-        thisX = 2*maxVelocity; // move right
+        thisX = maxVelocity; // move right
       } {
-        thisX = -2*maxVelocity; // move left
+        thisX = -1*maxVelocity; // move left
       };
     };
     // along the y-axis
     if ((pos.y > innerBounds[1][0]) and: (pos.y < innerBounds[1][1])) {
       if (pos.y >= 0) {
-        thisY = 2*maxVelocity; // move up
+        thisY = maxVelocity; // move up
       } {
-        thisY = -2*maxVelocity; // move down
+        thisY = -1*maxVelocity; // move down
       };
     };
 
@@ -407,6 +409,6 @@ BoidUnit2D {
 
   bounds_ {|val|
     bounds = val;
-    innerBounds = bounds * innerBoundRatio;
+    // innerBounds = bounds * innerBoundRatio;
   }
 }
