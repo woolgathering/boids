@@ -325,11 +325,11 @@ BoidUnit2D {
   bound {
     var vec, thisX = 0, thisY = 0;
     // x position
-    if (pos.x < bounds[0][0]) {thisX = -2*maxVelocity};
-    if (pos.x > bounds[0][1]) {thisX = 2*maxVelocity};
+    if (pos.x < bounds[0][0]) {thisX = 2*maxVelocity};
+    if (pos.x > bounds[0][1]) {thisX = -2*maxVelocity};
     // y position
-    if (pos.y < bounds[1][0]) {thisY = -2*maxVelocity};
-    if (pos.y > bounds[1][1]) {thisY = 2*maxVelocity};
+    if (pos.y < bounds[1][0]) {thisY = 2*maxVelocity};
+    if (pos.y > bounds[1][1]) {thisY = -2*maxVelocity};
 
     vec = RealVector2D.newFrom([thisX,thisY]);
     pos = pos + vec; // add the vectors
@@ -397,7 +397,7 @@ BoidUnit2D {
   centerOfMass_ {|vec|
     centerOfMass = vec; // get the perceived center of mass for this BoidUnit
     // each time we get a new center of mass, recalculate the first vector offset
-    centerInstinct = centerOfMass/50; // get the vector that moves it 1% toward the center of the flock (this can be weighted??)
+    centerInstinct = centerOfMass/100; // get the vector that moves it 1% toward the center of the flock (this can be weighted??)
   }
 
   maxVelocity_ {|val|
