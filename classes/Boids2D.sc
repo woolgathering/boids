@@ -342,6 +342,17 @@ BoidUnit2D {
     var vec, thisX = 0, thisY = 0;
     // along the x-axis
     if ((pos.x > innerBounds[0][0]) and: (pos.x < innerBounds[0][1])) {
+      /*
+      // get the scalar for the x-axis
+      dist = dist(pos,zero);
+      ratio = 1 - (dist/innerBounds[0][1]); // use the positive number since they're both the same
+      scalar = innerBoundScalar * ratio; // multiply by the "anti-gravity"
+
+      .... then
+
+      thisX = scalar * maxVelocity;
+      thisX = -1 * scalar * maxVelocity;
+      */
       if (pos.x >= 0) {
         thisX = maxVelocity; // move right
       } {
