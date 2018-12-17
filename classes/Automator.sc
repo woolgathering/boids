@@ -1,5 +1,5 @@
 Automator {
-  var <nodes, <curve, <>floppedNodes, <>normalizedNodes, <totalTime, <maxVal, <>name;
+  var <nodes, <curve, <>floppedNodes, <>normalizedNodes, <totalTime, <maxVal, actualMax, <minVal, <>name;
   var window, envView, key, playRoutine;
 
   *new {|nodes, curve = \lin|
@@ -23,18 +23,13 @@ Automator {
   }
 
   init {
-    // if (nodes.isInteger) {
-    //   nodes = Array.fill(nodes, {|i|
-    //     [i*10, 0]
-    //   });
-    // };
-
     curve = curve ? \lin;
-
     floppedNodes = nodes.flop;
     normalizedNodes = this.normalize(floppedNodes);
     totalTime = floppedNodes[0].maxItem;
     maxVal = floppedNodes[1].maxItem;
+    minVal = floppedNodes[1].minItem;
+    actualMax = maxVal;
     this.makeEnvView;
   }
 
@@ -59,9 +54,10 @@ Automator {
 
   // make an array of the values at the time incremenet
   makeArray {|timeInc = 0.1|
-    var sig, steps, env;
+    var steps, env;
     steps = totalTime/timeInc; // get the total number of steps at timeInc
-    env = Env(floppedNodes[1], floppedNodes[0].differentiate[1..], curve);
+    // env = Env(floppedNodes[1], floppedNodes[0].differentiate[1..], curve);
+    env = this.getEnv;
     ^env.asSignal(steps.floor).as(Array); // make a signal and return it
   }
 
@@ -72,6 +68,7 @@ Automator {
     width = Window.screenBounds.width;
     height = Window.screenBounds.height;
     step = 1/(totalTime*2); // calculate the step
+    // step = 0.01;
     // window = Window(name.asString, Rect(width/2, height/2, 500, 300));
     window = Window(name.asString, Rect(width/3 , height/3, width/2, height/3));
     window.view.decorator = FlowLayout(window.view.bounds);
@@ -81,19 +78,16 @@ Automator {
       .drawRects_(true)
       .resize_(5)
       .keepHorizontalOrder_(true)
-      .step_(step) // this will probably have to be edited according to the total durtation to make each step 500ms
-      .grid_(Point(step*2,step*2)) // see comment on step
+      .step_(0.001) // this will probably have to be edited according to the total durtation to make each step 500ms
+      .grid_(Point(step*2, step*2)) // see comment on step
       .gridOn_(true)
       .thumbSize_(10)
       .curves_(curve) // set the curve
       .action_({|view| this.envViewAction})
       .value_(normalizedNodes);
 
-    // make the labels
-    labels = envView.value.flop.collect{|coordinate|
-      "(%, %)".format((coordinate[0]*totalTime).round(0.1), (coordinate[1]*maxVal).round(0.01)); // make a string with the correctly formatted label
-    };
-    envView.strings_(labels); // set it
+    // make the labels and update
+    this.prUpdateView;
 
     ////////////////////////
     // add and remove nodes
@@ -111,47 +105,41 @@ Automator {
         newValue = newValue.sort({|point1, point2|
           point1[0] < point2[0]; // sort by the first element in each subarray
         });
+
         defer {
-          var labels;
           view.value_(newValue.flop); // make it in the display
-          // relabel
-          labels = envView.value.flop.collect{|coordinate|
-            "(%, %)".format((coordinate[0]*totalTime).round(0.1), (coordinate[1]*maxVal).round(0.01)); // make a string with the correctly formatted label
+          // get the new values (often shifted slightly due to the step value in the EnvelopeView)
+          floppedNodes = envView.value.collect{|array, i|
+            if(i==0) {
+              array*totalTime;
+            } {
+              (array*abs(minVal-maxVal)) + minVal;
+            };
           };
-          envView.strings_(labels); // set it
+
+          // set things again
+          nodes = floppedNodes.flop;
+          normalizedNodes = envView.value;
+          maxVal = floppedNodes[1].maxItem;
+          minVal = floppedNodes[1].minItem;
         };
 
-        // set all the variables correctly (a lilttle cumbersome here... can be done better)
-        {
-          var tmp;
-          tmp = newValue.flop; // do it once
-          floppedNodes = [tmp[0]*totalTime, tmp[1]*maxVal];
-          nodes = floppedNodes.flop;
-          normalizedNodes = this.normalize(floppedNodes);
-          totalTime = floppedNodes[0].maxItem;
-          maxVal = floppedNodes[1].maxItem;
-        }.value;
-
+        this.prUpdateView; // update
       };
     });
 
+    /////////////////////////////////
     // delete a node with backspace
+    /////////////////////////////////
     envView.keyDownAction_({|view, char, mod, unicode|
       key = unicode; // set the key
-
-      if ((unicode == 8) and: (view.index != -1)) {
-        var value, idx;
-        value = view.value;
-        value = value.flop;
-        value.removeAt(view.index);
-        defer {
-          view.value_(value.flop); // remove the index on backspace
-          // relabel
-          labels = envView.value.flop.collect{|coordinate|
-            "(%, %)".format((coordinate[0]*totalTime).round(0.1), (coordinate[1]*maxVal).round(0.01)); // make a string with the correctly formatted label
-          };
-          envView.strings_(labels); // set it
+      // only delete if we have an index selected and don't allow nodes at the beginning and end to be deleted
+      if ((unicode == 8) && (view.index > 0) && (view.index != (view.value[0].size-1))) {
+        // remove the values at the index in normalizedNodes
+        2.do{|i|
+          normalizedNodes[i].removeAt(view.index);
         };
+        this.prUpdateView;
       };
 
       // on esc, despect all (doesn't work???)
@@ -164,13 +152,6 @@ Automator {
       key = -1; // set it so that nothing happens when we release any key
     });
     /////////////////////////////////////////////////////////
-
-    //////////////////////////////////////////////
-    // not exactly sure why we need to do this here but otherwise the array is created that starts with a bunch of 0's
-    normalizedNodes = envView.value;
-    floppedNodes = this.unnormalize;
-    nodes = floppedNodes.flop;
-    //////////////////////////////////////////////
 
     window
       .view.deleteOnClose_(false); // don't destory when we close (but must do so manually)
@@ -192,22 +173,24 @@ Automator {
     normalizedNodes = envView.value;
     floppedNodes = this.unnormalize;
     nodes = floppedNodes.flop;
-    // do stuff to the GUI
-    defer {
-      envView.setString(envView.index, "(%, %)".format((envView.x*totalTime).round(0.1), (envView.y*maxVal).round(0.1)));
-    };
+    this.prUpdateView; // update the GUI
+
+    // if we select the first or last node, don't allow the x position to be adjusted!! <-----------------------------------------------
   }
 
   // digest the nodes into a form that's passable to an EnvelopeView
-  normalize {|nodes|
-    var normalized, tmp;
+  normalize {|nodes, max|
+    var normalized, min, diff, range;
     normalized = 2.collect{|i|
       if (i==1) {
-        tmp = nodes[i].addFirst(0); // ensure there's a zero in the y values
-        tmp = tmp.normalize; // normalize it
-        tmp[1..]; // return all but the first index (0)
+        if(max.notNil) {
+          min = nodes[i].minItem;
+          nodes[i].normalize(0, abs(min-nodes[i].maxItem)/abs(min-max)); // normalize for our range (don't move nodes)
+        } {
+          nodes[i].normalize; // otherwise normalize and move the nodes
+        };
       } {
-        nodes[i].sort.normalize; // normalize normally
+        nodes[i].sort.normalize; // normalize the time domain
       };
     };
     ^normalized;
@@ -217,7 +200,7 @@ Automator {
   unnormalize {
     var tmp = Array.newClear(2);
     tmp[0] = envView.value[0]*totalTime;
-    tmp[1] = envView.value[1]*maxVal;
+    tmp[1] = (envView.value[1]*abs(minVal-maxVal)) + minVal;
     ^tmp;
   }
 
@@ -226,14 +209,12 @@ Automator {
     var labels, step;
     if (envView.notNil) {
       defer {
-        labels = envView.value.flop.collect{|coordinate|
-          "(%, %)".format((coordinate[0]*totalTime).round(0.1), (coordinate[1]*maxVal).round(0.01)); // make a string with the correctly formatted label
+        envView.value_(normalizedNodes);
+        labels = nodes.collect{|coordinate, i|
+          "(%, %)".format(coordinate[0].round(0.001), coordinate[1].round(0.001)); // make a string with the correctly formatted label
         };
         envView.strings_(labels); // set it
-
-        // redraw the grid and recalculate the step
-        step = 1/(totalTime*2); // calculate the step
-        envView.step_(step).grid_(Point(step*2,step*2));
+        envView.curves = curve; // reset the curve, as well
       };
     };
   }
@@ -289,18 +270,26 @@ Automator {
   // change the total time, keeping the proportions
   totalTime_ {|time|
     totalTime = time;
-    floppedNodes = [normalizedNodes[0]*totalTime, normalizedNodes[1]*maxVal]; // adjust the times
+    // floppedNodes = [normalizedNodes[0]*totalTime, normalizedNodes[1]*maxVal]; // adjust the times
+    floppedNodes[0] = normalizedNodes[0]*totalTime;
     nodes = floppedNodes.flop; // set the nodes
-
     this.prUpdateView; // update the node labels
   }
 
-  // reset the max value and scale everything accordingly
   maxVal_ {|val|
-    maxVal = val;
-    floppedNodes = [normalizedNodes[0]*totalTime, normalizedNodes[1]*maxVal]; // adjust the times
-    nodes = floppedNodes.flop; // set the nodes
+    this.setMaxVal(val, false); // don't adjust nodes in the vertical by default. If you want to, use setMaxVal(val, true)
+  }
 
+  // reset the max value and scale everything accordingly
+  setMaxVal {|val, adjustNodes = false|
+    maxVal = val; // set the maximum value
+    // use different methods depending on if we want to adjust nodes
+    if(adjustNodes) {
+      normalizedNodes = this.normalize(floppedNodes);
+    } {
+      normalizedNodes = this.normalize(floppedNodes, maxVal);
+    };
+    // defer {envView.value_(normalizedNodes)};
     this.prUpdateView; // update the node labels
   }
 
