@@ -22,6 +22,16 @@ Automator {
 
   }
 
+  // make an Automator from an Envelope
+  // can be used to easily save and retrieve automation curves
+  *newFromEnv {|env|
+    var levels, times, nodes;
+    levels = env.levels; // get the levels
+    times = env.times.addFirst(0).integrate; // get the times and their incremental sums
+    nodes = [times,levels].flop; // make  the nodes
+    ^super.newCopyArgs(nodes, env.curves).init; // make a new instance
+  }
+
   init {
     curve = curve ? \lin;
     floppedNodes = nodes.flop;
