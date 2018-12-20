@@ -1,6 +1,11 @@
 Automator {
   var <nodes, <curve, <>floppedNodes, <>normalizedNodes, <totalTime, <maxVal, actualMax, <minVal, <>name;
-  var window, envView, key, playRoutine;
+  var window, envView, key, playRoutine, env;
+  classvar allAutomators;
+
+  *initClass {
+    allAutomators = List.new(0); // a List to have all playRoutines (for *stopAll)
+  }
 
   *new {|nodes, curve = \lin|
     ^super.newCopyArgs(nodes.asFloat, curve).init;
@@ -17,9 +22,9 @@ Automator {
     };
   }
 
-  // stop all Automators
-  *stop {
-
+  // stop all automator routines
+  *stopAll {
+    allAutomators.do(_.stop);
   }
 
   // make an Automator from an Envelope
@@ -53,6 +58,7 @@ Automator {
         timeInc.wait;
       };
     };
+    allAutomators.add(playRoutine); // add it to the master list
   }
 
   // stop the routine
