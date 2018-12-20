@@ -45,16 +45,19 @@ Automator {
     maxVal = floppedNodes[1].maxItem;
     minVal = floppedNodes[1].minItem;
     actualMax = maxVal;
+    env = this.getEnv;
     this.makeEnvView;
   }
 
   // play the BPF on the client
   play {|timeInc = 0.1, func|
-    var array;
-    array = this.makeArray(timeInc); // get an array of the right size
+    var time, steps;
+    steps = (env.duration/timeInc)+1; // get the number of steps we need
+    time = 0; // set the initial time
     playRoutine = forkIfNeeded {
-      array.do{|val|
-        func.(val); // evaluate the function and pass in the value
+      steps.do{
+        func.(env.at(time), time); // evaluate the function. pass in the value and the time.
+        time = time+timeInc; // increment
         timeInc.wait;
       };
     };
@@ -72,7 +75,6 @@ Automator {
   makeArray {|timeInc = 0.1|
     var steps, env;
     steps = totalTime/timeInc; // get the total number of steps at timeInc
-    // env = Env(floppedNodes[1], floppedNodes[0].differentiate[1..], curve);
     env = this.getEnv;
     ^env.asSignal(steps.floor).as(Array); // make a signal and return it
   }
@@ -84,8 +86,6 @@ Automator {
     width = Window.screenBounds.width;
     height = Window.screenBounds.height;
     step = 1/(totalTime*2); // calculate the step
-    // step = 0.01;
-    // window = Window(name.asString, Rect(width/2, height/2, 500, 300));
     window = Window(name.asString, Rect(width/3 , height/3, width/2, height/3));
     window.view.decorator = FlowLayout(window.view.bounds);
     envView = EnvelopeView(window, Rect(0, 0, (width/2)-5, (height/3)-5))
@@ -231,6 +231,7 @@ Automator {
         };
         envView.strings_(labels); // set it
         envView.curves = curve; // reset the curve, as well
+        env = this.getEnv; // get the new Envelope
       };
     };
   }
@@ -265,6 +266,7 @@ Automator {
       normalizedNodes = envView.value;
       floppedNodes = this.unnormalize;
       nodes = floppedNodes.flop;
+      env = this.getEnv;
       //////////////////////////////////////////////
     } {
       ^"Path must not be nil!".error;
@@ -305,7 +307,6 @@ Automator {
     } {
       normalizedNodes = this.normalize(floppedNodes, maxVal);
     };
-    // defer {envView.value_(normalizedNodes)};
     this.prUpdateView; // update the node labels
   }
 
@@ -314,6 +315,7 @@ Automator {
     if (envView.notNil) {
       defer {
         envView.curves = curve; // reset it
+        this.prUpdateView;
       };
     };
   }
