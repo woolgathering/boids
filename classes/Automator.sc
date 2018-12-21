@@ -12,10 +12,11 @@ Automator {
   }
 
   *load {|path|
-    var tmp, dict;
+    var archive, dict;
     if(path.notNil) {
-      tmp = ZArchive.read(path); // read the ZArchive
-      dict = tmp.readItem; // read the first and only item in this
+      archive = ZArchive.read(path); // read the ZArchive
+      dict = archive.readItem; // read the first and only item in this
+      archive.close;
       ^super.newCopyArgs(dict.nodes, dict.curve).init; // make a new Automator
     } {
       ^"Path must not be nil!".error;
@@ -248,6 +249,7 @@ Automator {
       dict.nodes = nodes; // save the nodes
       dict.curve = curve; // save the curve
       archive.writeItem(dict); // write the entire dictionary
+      archive.writeClose; // close the file
     } {
       ^"Path must not be nil!".error;
     };
