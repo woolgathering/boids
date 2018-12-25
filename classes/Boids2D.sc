@@ -49,7 +49,7 @@ Boids2D {
 
     // now set the average within each BoidUnit and compensate for its percieved center by subtracting itself
     boidList.do{|boid, i|
-      boid.centerOfMass = centerInstinct * (sum - boid.pos)/(boidList.size - 1); // set it
+      boid.centerOfMass = centerInstinct * ((sum - boid.pos)/(boidList.size - 1)); // set it
     };
   }
 
@@ -81,7 +81,7 @@ Boids2D {
     };
     boidList.do{|boid|
       var thisSum = sum - boid.vel; // remove this boid from the sum
-      boid.matchVelocity = matchVelocity * (thisSum/(boidList.size-1)) * 0.125; // send one eigth of the magnitude to the boid
+      boid.matchVelocity = matchVelocity * ((thisSum/(boidList.size-1)) * 0.125); // send one eigth of the magnitude to the boid
     };
   }
 
@@ -411,7 +411,7 @@ BoidUnit2D {
   calcObstacles {|obstacles|
     var vec = RealVector.zero(2).asRealVector2D;
     obstacles.do{|obstacle|
-      vec = vec + ((obstacle[0]-pos)*obstacle[1]*-1);
+      vec = vec + (-1*(obstacle[0]-pos)*obstacle[1]);
     };
     ^vec; // return the vector
   }
