@@ -329,14 +329,30 @@ BoidUnit2D {
   bound {
     var vec, thisX = 0, thisY = 0;
     // x position
-    if (pos.x < bounds[0][0]) {thisX = 2*maxVelocity};
-    if (pos.x > bounds[0][1]) {thisX = -2*maxVelocity};
+    if (pos.x < bounds[0][0]) {thisX = 1*maxVelocity};
+    if (pos.x > bounds[0][1]) {thisX = -1*maxVelocity};
     // y position
-    if (pos.y < bounds[1][0]) {thisY = 2*maxVelocity};
-    if (pos.y > bounds[1][1]) {thisY = -2*maxVelocity};
+    if (pos.y < bounds[1][0]) {thisY = 1*maxVelocity};
+    if (pos.y > bounds[1][1]) {thisY = -1*maxVelocity};
 
     vec = RealVector2D.newFrom([thisX,thisY]);
     pos = pos + vec; // add the vectors
+  }
+
+  cirlceBound {
+    var vec, radius, dist, diff, zero, gravity;
+    zero = RealVector.zero(2).asRealVector2D;
+    radius = bounds[0][1]; // get a radius from the origin to a side
+    dist = pos.dist(zero); // get the distance between this and the origin
+
+    // if the distance is greater than the radius, then add another vector that points to the origin
+    if(dist>radius) {
+      diff = dist-radius; // get the difference
+      // vec = RealVector.zero(2).asRealVector2D + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 1.0, 0.5, \min)); // make a new vector and scale it
+      vec = RealVector.zero(2).asRealVector2D + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 5.0, 0.5)*maxVelocity); // make a new vector and scale it
+      vec = vec.limit(maxVelocity*2);
+      pos = pos + vec; // add it
+    };
   }
 
   // an inner bound. Useful when using as a spatializer
@@ -378,11 +394,13 @@ BoidUnit2D {
   moveBoid {|targets, obstacles|
     vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
     if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
-    if (obstacles.isEmpty.not) {vel = vel + this.calcTargets(obstacles)}; // if there are obstacles, calculate the vector
-    pos = pos + vel; // get the new position
-    this.bound; // bound the coordinates
+    if (obstacles.isEmpty.not) {vel = vel + this.calcObstacles(obstacles)}; // if there are obstacles, calculate the vector
+    // vel = vel.rotate(rrand(-10,10).degrad);
+    // this.bound; // bound the coordinates
+    this.cirlceBound;
     if (useInnerBounds) {this.innerBound}; // only do the inner bounds when we want
     vel = vel.limit(maxVelocity); // speed limit
+    pos = pos + vel; // get the new position
   }
 
   getPanVals {
