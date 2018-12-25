@@ -16,7 +16,7 @@
 
 Boids2D {
   var <>numBoids, <>timestep, <>centerInstinct, <>innerDistance, <>matchVelocity, <centerOfMass;
-  var >boidList, <maxVelocity, <minSpace, targets, obstacles;
+  var >boidList, <maxVelocity, workingMaxVelocity, <minSpace, targets, obstacles;
   var <bounds, <innerBoundRatio, <useInnerBounds, <innerBounds;
 
   *new {|numBoids = 10, timestep = 0.5, centerInstinct = 1, innerDistance = 1, matchVelocity = 1|
@@ -26,6 +26,7 @@ Boids2D {
   init {
     boidList = List.new(0); // an empty list of BoidUnits that we fill below
     maxVelocity = 5; // speed limit in meters per second (need to multiply it by the timestep)
+    workingMaxVelocity = maxVelocity * timestep; // set the workingMaxVelocity (accounting for the timestep)
     minSpace = 1; // minmum distance between boids in a flock in meters
     centerOfMass = RealVector.zero(2).asRealVector2D; // init center of mass at the origin
     bounds = [[-50,50], [-50,50]]; // set the default bounds
@@ -243,8 +244,9 @@ Boids2D {
   /////////////////////////////////
   maxVelocity_ {|val|
     maxVelocity = val; // maxVelocity is the maximum length of the velocity vector
+    workingMaxVelocity = maxVelocity * timestep;
     boidList.do{|boid|
-      boid.maxVelocity = maxVelocity; // set it in each individual boid
+      boid.maxVelocity = workingMaxVelocity; // set it in each individual boid
     };
   }
 
