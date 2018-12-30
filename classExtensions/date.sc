@@ -35,9 +35,7 @@
       {
         switch(month,
           1, {31}, // yesterday was the last day of January
-          2, {
-            if(leapYear) {29} {28};
-            }, // yesterday was the last day of February
+          2, {if(leapYear) {29} {28}}, // yesterday was the last day of February
           3, {31}, // yesterday was the last day of March
           4, {30}, // yesterday was the last day of April
           5, {31}, // yesterday was the last day of May
@@ -55,7 +53,7 @@
 
     dayOfWeek = (this.dayOfWeek-1)%7; // make sure we've got it right
 
-    ^Date(year, month, day, this.hour, this.minute, this.second, dayOfWeek, this.rawSeconds); // return exactly 24 hours ago
+    ^Date(year, month, day, this.hour, this.minute, this.second, dayOfWeek, this.rawSeconds-86400); // return exactly 24 hours ago
   }
 
   // get exactly 24 hours from now
@@ -103,7 +101,15 @@
 
     dayOfWeek = (this.dayOfWeek+1)%7; // make sure we've got it right
 
-    ^Date(year, month, day, this.hour, this.minute, this.second, dayOfWeek, this.rawSeconds); // return exactly 24 hours ago
+    ^Date(year, month, day, this.hour, this.minute, this.second, dayOfWeek, this.rawSeconds+86400); // return exactly 24 hours ago
+  }
+
+  getDayOfWeek {
+    var year, tmp, dowEnumeration;
+    dowEnumeration = #[0,3,2,5,0,3,5,1,4,6,2,4];
+    tmp = if(this.month-1 < 3) {1} {0};
+    year = this.year - tmp;
+    ^(year + (year/4) - (year/100) + (year/400) + dowEnumeration[this.month-2] + this.day) % 7;
   }
 
 }
