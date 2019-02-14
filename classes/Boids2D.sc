@@ -112,7 +112,7 @@ Boids2D {
 
   addBoid {|nodeID|
     var initPos, boid;
-    initPos = RealVector.rand2D(-10,10,-10,10).asRealVector2D; // get a random vector position
+    initPos = RealVector.rand2D(bounds[0][0] * -0.5, bounds[0][1]*0.5, bounds[1][0] * -0.5, bounds[1][1]*0.5).asRealVector2D; // get a random vector position
     initPos = centerOfMass + initPos.limit(maxVelocity*2); // place it near the center of the flock
     boid = BoidUnit2D.new(pos: initPos, maxVelocity: maxVelocity*timestep)
       .bounds_(bounds) // make it
