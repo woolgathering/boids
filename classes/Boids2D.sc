@@ -286,6 +286,85 @@ Boids2D {
     ^this;
   }
 
+  // visualizer
+  visualizer {|returnWindow = false|
+    var window, loop;
+    window = Window("Flock Visualizer").front;
+    window.view.background_(Color.white);
+
+    // draw the boids (as squares for now)
+    window.drawFunc = {
+      ////////
+      // plot the boids as black squares ////////
+      ////////
+      boidList.do{|boid|
+        var normalizedPos;
+        Pen.color = Color.black;
+        normalizedPos = [
+          (boid.pos.x+bounds[0][0].abs)/(bounds[0][0].abs*2),
+          (boid.pos.y+bounds[1][0].abs)/(bounds[1][0].abs*2)
+        ];
+        normalizedPos = [
+          normalizedPos[0],
+          1 - normalizedPos[1]
+        ];
+        // normalizedPos.postln;
+        Pen.addRect(
+          Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
+        );
+        Pen.perform(\fill);
+      };
+
+      ////////
+      // plot the targets as red squares
+      ////////
+      targets.do{|target|
+        var normalizedPos;
+        Pen.color = Color.red;
+        normalizedPos = [
+          (target[0].x+bounds[0][0].abs)/(bounds[0][0].abs*2),
+          (target[0].y+bounds[1][0].abs)/(bounds[1][0].abs*2)
+        ];
+        normalizedPos = [
+          normalizedPos[0],
+          1 - normalizedPos[1]
+        ];
+        // normalizedPos.postln;
+        Pen.addRect(
+          Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
+        );
+        Pen.perform(\fill);
+      };
+
+      ////////
+      // plot the inner bounds as an unfilled square
+      ////////
+      // {
+      //   var verticies, size;
+      //   size = innerBounds[0][1];
+      //   size = size/(bounds[1][1]*2); // normalize it
+      //   verticies = [
+      //     Point((-1*size)/2, (-1*size)/2),
+      //     Point(size/2, size/2),
+      //     Point(size/2, (-1*size)/2),
+      //     Point((-1*size)/2, size/2)
+      //   ];
+      //   Pen.color = Color.grey;
+      //   Pen.addRect(
+      //     Rect(verticies[0].x, verticies[0].y, size, size);
+      //   );
+      //   Pen.perform(\stroke);
+      // }.value;
+    };
+
+    loop = {
+      loop {window.refresh; timestep.wait};
+    }.fork(AppClock);
+
+    window.onClose_({loop.stop});
+    if(returnWindow) {^window};
+  }
+
   /////////////////////////////
   // custom getter methods
   /////////////////////////////
