@@ -56,18 +56,31 @@ Boids2D {
   // rule 2
   prGetInnerDistance {
     boidList.do{|boid|
-      var vec, dist;
+      var vec, dist, count;
       vec = RealVector.zero(2).asRealVector2D; // a new zero vector
+      count = 1;
       boidList.do{|thisBoid|
+        // var tmpVec = RealVector.zero(2).asRealVector2D;
         // don't check for boids that are the exact same object
         if ((boid === thisBoid).not) {
           dist = boid.pos.dist(thisBoid.pos); // get the distance between these boids
           // if the absolute value of the distance is less than the threshold
           if (abs(dist) < minSpace) {
-            vec = vec - (boid.pos-thisBoid.pos); // calculate the difference vector
+            ///// original ///////
+            vec = vec - ((boid.pos-thisBoid.pos)/abs(dist)); // calculate the difference vector
+            /////////////////////
+
+            // vec = vec - (thisBoid.pos-boid.pos); // calculate the difference vector
+            // tmpVec = boid.pos-thisBoid.pos;
+            // tmpVec = tmpVec.norm/abs(dist);
+            // tmpVec = thisBoid.pos - boid.pos;
+            // vec = vec + tmpVec;
+
+            count = count+1;
           };
         };
       };
+    vec = vec/count; // average
     boid.innerDistance = innerDistance * vec; // set the innerDistance vector in each BoidUnit
     };
   }
@@ -182,7 +195,7 @@ Boids2D {
   }
 
   clearTargets {
-    targets = List[]; // clear the list
+    targets = targets.clear; // clear the list
   }
 
   removeTarget {|index|
@@ -319,7 +332,7 @@ BoidUnit2D {
     innerDistance = args[1] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
     matchVelocity = args[2] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
 
-    centerInstinct = centerOfMass/50; // set this here
+    centerInstinct = centerOfMass/100; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
     bounds = [[-25,25],[-25,25]]; // [ [xmin, xmax], [ymin, ymax]]
     useInnerBounds = false; // default to not using an inner bound method
@@ -349,8 +362,9 @@ BoidUnit2D {
     if(dist>radius) {
       diff = dist-radius; // get the difference
       // vec = RealVector.zero(2).asRealVector2D + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 1.0, 0.5, \min)); // make a new vector and scale it
-      vec = RealVector.zero(2).asRealVector2D + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 5.0, 0.5)*maxVelocity); // make a new vector and scale it
-      vec = vec.limit(maxVelocity*2);
+      // vec = RealVector.zero(2).asRealVector2D + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 5.0, 0.5)*maxVelocity); // make a new vector and scale it
+      vec = RealVector.zero(2).asRealVector2D + (zero-pos); // make a new vector and scale it
+      vec = vec.limit(maxVelocity);
       pos = pos + vec; // add it
     };
   }
@@ -393,9 +407,9 @@ BoidUnit2D {
 
   moveBoid {|targets, obstacles|
     vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
-    if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
+    // if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
+    if (targets.isEmpty.not) {vel = vel + this.calcTargetsWithField(targets)}; // if there are targets, calculate the vector
     if (obstacles.isEmpty.not) {vel = vel + this.calcObstacles(obstacles)}; // if there are obstacles, calculate the vector
-    // vel = vel.rotate(rrand(-10,10).degrad);
     // this.bound; // bound the coordinates
     this.cirlceBound;
     if (useInnerBounds) {this.innerBound}; // only do the inner bounds when we want
@@ -411,7 +425,7 @@ BoidUnit2D {
   calcObstacles {|obstacles|
     var vec = RealVector.zero(2).asRealVector2D;
     obstacles.do{|obstacle|
-      vec = vec + (-1*(obstacle[0]-pos)*obstacle[1]);
+      vec = vec - ((obstacle[0]-pos)*obstacle[1]);
     };
     ^vec; // return the vector
   }
@@ -422,6 +436,20 @@ BoidUnit2D {
       vec = vec + ((target[0]-pos)*target[1]);
     };
     ^vec; // return the vector
+  }
+
+  calcTargetsWithField {|targets|
+    var vec = RealVector.zero(2).asRealVector2D, distFromTarget, gravity;
+    targets.do{|target|
+      distFromTarget = this.pos.dist(target[0]).max(1); // get the distance from this boid to the target
+      gravity = this.inverseSquare(distFromTarget, target[1]*100).clip(0,1);
+      vec = vec + ((target[0]-pos)*gravity);
+    };
+    ^vec; // return the vector
+  }
+
+  inverseSquare {|dist = 1, gravity = 1|
+    ^(1*gravity)/(dist**2);
   }
 
   /////////////////////////////////
