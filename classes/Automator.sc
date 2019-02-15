@@ -11,13 +11,13 @@ Automator {
     ^super.newCopyArgs(nodes.asFloat, curve).init;
   }
 
-  *load {|path|
+  *load {|path, createView = false|
     var archive, dict;
     if(path.notNil) {
       archive = ZArchive.read(path); // read the ZArchive
       dict = archive.readItem; // read the first and only item in this
       archive.close;
-      ^super.newCopyArgs(dict.nodes, dict.curve).init; // make a new Automator
+      ^super.newCopyArgs(dict.nodes, dict.curve).initFromLoad(createView); // make a new Automator
     } {
       ^"Path must not be nil!".error;
     };
@@ -48,6 +48,23 @@ Automator {
     actualMax = maxVal;
     env = this.getEnv;
     this.makeEnvView;
+  }
+
+  initFromLoad {|createView|
+    curve = curve ? \lin;
+    floppedNodes = nodes.flop;
+    normalizedNodes = this.normalize(floppedNodes);
+    totalTime = floppedNodes[0].maxItem;
+    maxVal = floppedNodes[1].maxItem;
+    minVal = floppedNodes[1].minItem;
+    actualMax = maxVal;
+    env = this.getEnv;
+    createView = createView ? true;
+
+    // only create the view if we want
+    if(createView) {
+      this.makeEnvView;
+    };
   }
 
   // play the BPF on the client
