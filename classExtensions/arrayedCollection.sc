@@ -6,9 +6,9 @@
   */
 
   *interpolate {|thisArray, thatArray, steps = 5|
+    var diffs, stepSize, interpArrays;
     if(thisArray.size == thatArray.size)
       {
-        var diffs, stepSize, interpArrays;
         diffs = (thisArray.size).collect{|i|
           thatArray[i]-thisArray[i]; // get the difference between every index
         };
@@ -29,9 +29,9 @@
   }
 
   interpolate {|array, steps = 5|
+    var diffs, stepSize, interpArrays;
     if(this.size == array.size)
       {
-        var diffs, stepSize, interpArrays;
         diffs = (this.size).collect{|i|
           array[i]-this[i]; // get the difference between every index
         };
