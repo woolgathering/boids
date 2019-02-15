@@ -1,6 +1,6 @@
 Automator {
   var <nodes, <curve, <>floppedNodes, <>normalizedNodes, <totalTime, <maxVal, actualMax, <minVal, <>name;
-  var window, envView, key, playRoutine, env;
+  var window, envView, key, playRoutine, <env;
   classvar allAutomators;
 
   *initClass {
