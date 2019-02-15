@@ -255,7 +255,10 @@ Automator {
   }
 
   free {
-    window.close; // close and destory the window containing the EnvelopeView manually
+    this.stop;
+    if(window.notNil) {
+      window.close; // close and destory the window containing the EnvelopeView manually
+    };
   }
 
   // save the nodes to a file
