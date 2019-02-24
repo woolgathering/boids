@@ -419,16 +419,25 @@ BoidUnit2D {
   }
 
   bound {
-    var vec, thisX = 0, thisY = 0;
-    // x position
-    if (pos.x < bounds[0][0]) {thisX = 1*maxVelocity};
-    if (pos.x > bounds[0][1]) {thisX = -1*maxVelocity};
-    // y position
-    if (pos.y < bounds[1][0]) {thisY = 1*maxVelocity};
-    if (pos.y > bounds[1][1]) {thisY = -1*maxVelocity};
+    var vec = List.new(0), thisX = 0, thisY = 0;
+    2.collect{|i|
+      var amount = 0;
+      if(pos[i] < bounds[i][0]) {
+          amount = bounds[i][0] + pos[i].abs; // how far off are we
+          amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
+        }
+        {
+          if(pos[i] > bounds[i][1]) {
+            amount = bounds[i][1] - pos[i]; // how far off are we
+            amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
+          };
+        };
+      boundVectors.add(amount); // add it to the list
+    };
 
-    vec = RealVector2D.newFrom([thisX,thisY]);
-    pos = pos + vec; // add the vectors
+    vec = RealVector2D.newFrom(vec.asArray);
+    // pos = pos + vec; // add the vectors
+    vel = vel + vec; // add the vectors in velocity-space
   }
 
   cirlceBound {
