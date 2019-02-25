@@ -432,7 +432,7 @@ BoidUnit2D {
             amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
           };
         };
-      boundVectors.add(amount); // add it to the list
+      vec.add(amount); // add it to the list
     };
 
     vec = RealVector2D.newFrom(vec.asArray);
@@ -451,9 +451,10 @@ BoidUnit2D {
       diff = dist-radius; // get the difference
       // vec = RealVector.zero(2).asRealVector2D + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 1.0, 0.5, \min)); // make a new vector and scale it
       // vec = RealVector.zero(2).asRealVector2D + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 5.0, 0.5)*maxVelocity); // make a new vector and scale it
-      vec = RealVector.zero(2).asRealVector2D + (zero-pos); // make a new vector and scale it
+      // vec = RealVector.zero(2).asRealVector2D + (zero-pos); // make a new vector and scale it
+      vec = (RealVector.zero(2).asRealVector2D + (zero-pos)) * (diff/maxVelocity).min(1); // make a new vector and scale it
       vec = vec.limit(maxVelocity);
-      pos = pos + vec; // add it
+      vel = vel + vec; // add it
     };
   }
 
