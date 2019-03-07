@@ -501,8 +501,8 @@ BoidUnit2D {
     // if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
     if (targets.isEmpty.not) {vel = vel + this.calcTargetsWithField(targets)}; // if there are targets, calculate the vector
     if (obstacles.isEmpty.not) {vel = vel + this.calcObstacles(obstacles)}; // if there are obstacles, calculate the vector
-    // this.bound; // bound the coordinates
-    this.cirlceBound;
+    this.bound; // bound the coordinates
+    // this.cirlceBound;
     if (useInnerBounds) {this.innerBound}; // only do the inner bounds when we want
     vel = vel.limit(maxVelocity); // speed limit
     pos = pos + vel; // get the new position
