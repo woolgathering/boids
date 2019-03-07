@@ -1,0 +1,3 @@
+[submodule "VectorSpace"]
+	path = VectorSpace
+	url = https://github.com/woolgathering/VectorSpace
