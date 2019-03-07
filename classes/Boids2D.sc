@@ -287,7 +287,7 @@ Boids2D {
   }
 
   // visualizer
-  visualizer {|returnWindow = false|
+  visualizer {|showLabels = false, returnWindow = false|
     var window, loop;
     window = Window("Flock Visualizer").front;
     window.view.background_(Color.white);
@@ -297,21 +297,23 @@ Boids2D {
       ////////
       // plot the boids as black squares ////////
       ////////
-      boidList.do{|boid|
+      boidList.do{|boid, i|
         var normalizedPos;
         Pen.color = Color.black;
+        // normalize the position for the window
         normalizedPos = [
           (boid.pos.x+bounds[0][0].abs)/(bounds[0][0].abs*2),
-          (boid.pos.y+bounds[1][0].abs)/(bounds[1][0].abs*2)
+          (1 - (boid.pos.y+bounds[1][0].abs)/(bounds[1][0].abs*2))
         ];
-        normalizedPos = [
-          normalizedPos[0],
-          1 - normalizedPos[1]
-        ];
-        // normalizedPos.postln;
-        Pen.addRect(
-          Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
-        );
+        // normalizedPos = [
+        //   normalizedPos[0],
+        //   1 - normalizedPos[1]
+        // ];
+        Pen.addRect(Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5));
+        // show labels on the boids
+        if(showLabels) {
+          Pen.stringAtPoint(i.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: Color.blue);
+        };
         Pen.perform(\fill);
       };
 
