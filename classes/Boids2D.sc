@@ -29,7 +29,7 @@ Boids2D {
     workingMaxVelocity = maxVelocity * timestep; // set the workingMaxVelocity (accounting for the timestep)
     minSpace = 1; // minmum distance between boids in a flock in meters
     centerOfMass = RealVector.zero(2).asRealVector2D; // init center of mass at the origin
-    bounds = [[-50,50], [-50,50]]; // set the default bounds
+    bounds = [[-500,500], [-500,500]]; // set the default bounds
     useInnerBounds = false; // default to not using the inner bounds
     innerBoundRatio = 0.1; // default to 10%
     innerBounds = innerBoundRatio * bounds; // for ease of getting and setting
@@ -67,7 +67,8 @@ Boids2D {
           // if the absolute value of the distance is less than the threshold
           if (abs(dist) < minSpace) {
             ///// original ///////
-            vec = vec - ((boid.pos-thisBoid.pos)/abs(dist)); // calculate the difference vector
+            // vec = vec - ((boid.pos-thisBoid.pos)/abs(dist)); // calculate the difference vector
+            vec = vec - ((boid.pos-thisBoid.pos)*(minSpace/dist.pow(2))); // calculate the difference vector
             /////////////////////
 
             // vec = vec - (thisBoid.pos-boid.pos); // calculate the difference vector
@@ -102,8 +103,7 @@ Boids2D {
     // could instead pass an array of Nodes from which the NodeID's could be extracted and passed...
     num.do{
       var boid;
-      boid = BoidUnit2D.rand(centerInstinct, innerDistance, matchVelocity, maxVelocity: maxVelocity*timestep)
-        .bounds_(bounds) // make it
+      boid = BoidUnit2D.rand(bounds, centerInstinct, innerDistance, matchVelocity, workingMaxVelocity)
         .useInnerBounds_(useInnerBounds)
         .innerBounds_(innerBounds);
       boidList.add(boid); // add it to the list
@@ -114,7 +114,7 @@ Boids2D {
     var initPos, boid;
     initPos = RealVector.rand2D(bounds[0][0] * -0.5, bounds[0][1]*0.5, bounds[1][0] * -0.5, bounds[1][1]*0.5).asRealVector2D; // get a random vector position
     initPos = centerOfMass + initPos.limit(maxVelocity*2); // place it near the center of the flock
-    boid = BoidUnit2D.new(pos: initPos, maxVelocity: maxVelocity*timestep)
+    boid = BoidUnit2D.new(pos: initPos, maxVelocity: workingMaxVelocity)
       .bounds_(bounds) // make it
       .useInnerBounds_(useInnerBounds)
       .innerBounds_(innerBounds);
@@ -288,8 +288,10 @@ Boids2D {
 
   // visualizer
   visualizer {|showLabels = false, returnWindow = false|
-    var window, loop;
-    window = Window("Flock Visualizer").front;
+    var window, loop, availableBounds, size;
+    availableBounds = Window.availableBounds;
+    size = availableBounds.width/3;
+    window = Window("Flock Visualizer", Rect(availableBounds.width-size,availableBounds.height-size,size,size)).front;
     window.view.background_(Color.white);
 
     // draw the boids (as squares for now)
@@ -303,38 +305,64 @@ Boids2D {
         // normalize the position for the window
         normalizedPos = [
           (boid.pos.x+bounds[0][0].abs)/(bounds[0][0].abs*2),
-          (1 - (boid.pos.y+bounds[1][0].abs)/(bounds[1][0].abs*2))
+          1 - ((boid.pos.y+bounds[1][0].abs)/(bounds[1][0].abs*2))
         ];
-        // normalizedPos = [
-        //   normalizedPos[0],
-        //   1 - normalizedPos[1]
-        // ];
-        Pen.addRect(Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5));
+        // Pen.addOval(Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5));
+        Pen.addWedge(
+          Point(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1]), // point
+          10, // radius (pixels)
+          (-1*boid.vel.theta) - 3.5342917352885, // start angle (angle - pi/8 - pi) for visualizer corrections
+          // (-1*boid.vel.theta) - (pi/8) - pi, // start angle (angle - pi/8 - pi) for visualizer corrections
+          0.78539816339745 // size of angle (pi/4)
+        );
         // show labels on the boids
         if(showLabels) {
-          Pen.stringAtPoint(i.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: Color.blue);
+          Pen.stringAtPoint(i.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: Color.black);
         };
         Pen.perform(\fill);
       };
 
       ////////
-      // plot the targets as red squares
+      // plot the targets as blue squares
       ////////
-      targets.do{|target|
-        var normalizedPos;
-        Pen.color = Color.red;
+      targets.do{|target, i|
+        var normalizedPos, color;
+        color = Color.fromHexString("4989FF");
+        Pen.color = color;
         normalizedPos = [
           (target[0].x+bounds[0][0].abs)/(bounds[0][0].abs*2),
           (target[0].y+bounds[1][0].abs)/(bounds[1][0].abs*2)
         ];
-        normalizedPos = [
-          normalizedPos[0],
-          1 - normalizedPos[1]
-        ];
+        normalizedPos = [normalizedPos[0], 1 - normalizedPos[1]];
         // normalizedPos.postln;
         Pen.addRect(
           Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
         );
+        if(showLabels) {
+          Pen.stringAtPoint(i.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: color);
+        };
+        Pen.perform(\fill);
+      };
+
+      ////////
+      // plot the obstacles as red squares
+      ////////
+      obstacles.do{|obstacle, i|
+        var normalizedPos, color;
+        color = Color.fromHexString("FF4949");
+        Pen.color = color;
+        normalizedPos = [
+          (obstacle[0].x+bounds[0][0].abs)/(bounds[0][0].abs*2),
+          (obstacle[0].y+bounds[1][0].abs)/(bounds[1][0].abs*2)
+        ];
+        normalizedPos = [normalizedPos[0], 1 - normalizedPos[1]];
+
+        Pen.addRect(
+          Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
+        );
+        if(showLabels) {
+          Pen.stringAtPoint(i.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: color);
+        };
         Pen.perform(\fill);
       };
 
@@ -399,23 +427,23 @@ BoidUnit2D {
     ^super.newCopyArgs(vel, pos, maxVelocity).init;
   }
 
-  *rand {|centerOfMass, innerDistance, matchVelocity, maxVelocity = 5|
-    ^super.new.init(centerOfMass, innerDistance, matchVelocity, maxVelocity);
+  *rand {|bounds, centerOfMass, innerDistance, matchVelocity, maxVelocity = 5|
+    ^super.new.init(bounds, centerOfMass, innerDistance, matchVelocity, maxVelocity);
   }
 
   init {|...args|
-    vel = vel ? RealVector.rand2D(-15,15,-15,15).asRealVector2D;
-    pos = pos ? RealVector.rand2D(-50,50,-50,50).asRealVector2D;
-    maxVelocity = args[3] ? 5;
+    bounds = args[0] ? [[-500,500],[-500,500]]; // [ [xmin, xmax], [ymin, ymax]]
+    vel = vel ? RealVector.rand2D(-5,5,-5,5).asRealVector2D;
+    pos = pos ? RealVector.rand2D(bounds[0][0],bounds[0][1],bounds[1][0],bounds[1][1]).asRealVector2D;
+    maxVelocity = args[4] ? 5;
 
     // if these are not set, set them
-    centerOfMass = args[0] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
-    innerDistance = args[1] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
-    matchVelocity = args[2] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
+    centerOfMass = args[1] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
+    innerDistance = args[2] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
+    matchVelocity = args[3] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
 
     centerInstinct = centerOfMass/100; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
-    bounds = [[-25,25],[-25,25]]; // [ [xmin, xmax], [ymin, ymax]]
     useInnerBounds = false; // default to not using an inner bound method
     innerBounds = bounds * 0.1; // calculate the size as default
   }
@@ -438,7 +466,6 @@ BoidUnit2D {
     };
 
     vec = RealVector2D.newFrom(vec.asArray);
-    // pos = pos + vec; // add the vectors
     vel = vel + vec; // add the vectors in velocity-space
   }
 
@@ -500,9 +527,8 @@ BoidUnit2D {
     vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
     // if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
     if (targets.isEmpty.not) {vel = vel + this.calcTargetsWithField(targets)}; // if there are targets, calculate the vector
-    if (obstacles.isEmpty.not) {vel = vel + this.calcObstacles(obstacles)}; // if there are obstacles, calculate the vector
+    if (obstacles.isEmpty.not) {vel = vel + this.calcObstaclesWithField(obstacles)}; // if there are obstacles, calculate the vector
     this.bound; // bound the coordinates
-    // this.cirlceBound;
     if (useInnerBounds) {this.innerBound}; // only do the inner bounds when we want
     vel = vel.limit(maxVelocity); // speed limit
     pos = pos + vel; // get the new position
@@ -516,7 +542,17 @@ BoidUnit2D {
   calcObstacles {|obstacles|
     var vec = RealVector.zero(2).asRealVector2D;
     obstacles.do{|obstacle|
-      vec = vec - ((obstacle[0]-pos)*obstacle[1]);
+      vec = vec - ((obstacle[0]+pos)*obstacle[1]);
+    };
+    ^vec; // return the vector
+  }
+
+  calcObstaclesWithField {|obstacles|
+    var vec = RealVector.zero(2).asRealVector2D, distFromTarget, gravity;
+    obstacles.do{|obstacale|
+      distFromTarget = pos.dist(obstacale[0]).max(1); // get the distance from this boid to the obstacale
+      gravity = this.inverseSquare(distFromTarget, obstacale[1]).clip(0,1);
+      vec = vec + ((obstacale[0]+pos)*gravity);
     };
     ^vec; // return the vector
   }
@@ -532,8 +568,8 @@ BoidUnit2D {
   calcTargetsWithField {|targets|
     var vec = RealVector.zero(2).asRealVector2D, distFromTarget, gravity;
     targets.do{|target|
-      distFromTarget = this.pos.dist(target[0]).max(1); // get the distance from this boid to the target
-      gravity = this.inverseSquare(distFromTarget, target[1]*100).clip(0,1);
+      distFromTarget = pos.dist(target[0]).max(1); // get the distance from this boid to the target
+      gravity = this.inverseSquare(distFromTarget, target[1]*100).clip(0,1); // must multiply by 100??
       vec = vec + ((target[0]-pos)*gravity);
     };
     ^vec; // return the vector
