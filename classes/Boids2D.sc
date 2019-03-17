@@ -180,10 +180,10 @@ Boids2D {
   ///////////////////////////////////
   // targeting
   ///////////////////////////////////
-  addTarget {|vector, strength|
-    if(vector.isNil or: strength.isNil)
-      {"Insuffient arguments: %, %: no target was added!".format(vector, strength).warn; ^this};
-    targets.add([RealVector2D.newFrom(vector[..1]), strength]);
+  addTarget {|vector, gravity|
+    if(vector.isNil or: gravity.isNil)
+      {"Insuffient arguments: %, %: no target was added!".format(vector, gravity).warn; ^this};
+    targets.add([RealVector2D.newFrom(vector[..1]), gravity]);
   }
 
   clearTargets {
@@ -198,19 +198,19 @@ Boids2D {
     };
   }
 
-  editTarget {|index, target, strength|
+  editTarget {|index, target, gravity|
     if(index.isNil) {"Index is nil: no targets were edited!".warn}; // throw a warning if insufficent args were supplied
     if(target.notNil) {targets[index][0] = RealVector2D.newFrom(target[..1])}; // should check here if target is a Vector or not
-    if(strength.notNil) {targets[index][1] = strength}; // edit the strength parameter
+    if(gravity.notNil) {targets[index][1] = gravity}; // edit the gravity parameter
   }
 
   /////////////////////////////////////////
   ///// obstacles
   //////////////////////////////////////////
-  addObstacle {|vector, strength|
-    if(vector.isNil or: strength.isNil)
-      {"Insuffient arguments: %, %: no obstacle was added!".format(vector, strength).warn; ^this};
-    obstacles.add([RealVector2D.newFrom(vector[..1]), strength]); // add a new obstacle
+  addObstacle {|vector, repulsion|
+    if(vector.isNil or: repulsion.isNil)
+      {"Insuffient arguments: %, %: no obstacle was added!".format(vector, repulsion).warn; ^this};
+    obstacles.add([RealVector2D.newFrom(vector[..1]), repulsion]); // add a new obstacle
   }
 
   clearObstacles {
@@ -225,10 +225,10 @@ Boids2D {
     };
   }
 
-  editObstacle {|index, obstacle, strength|
+  editObstacle {|index, obstacle, repulsion|
     if(index.isNil) {"Index is nil: no obstacles were edited!".warn}; // throw a warning if insufficent args were supplied
     if(obstacle.notNil) {obstacles[index][0] = RealVector2D.newFrom(obstacle[..1])}; // should check here if target is a Vector or not
-    if(strength.notNil) {obstacles[index][1] = strength}; // edit the strength parameter
+    if(repulsion.notNil) {obstacles[index][1] = repulsion}; // edit the repulsion parameter
   }
 
   // print the variable information for this flock
@@ -530,7 +530,7 @@ BoidUnit2D {
   calcObstacles {|obstacles|
     var vec = RealVector.zero(2).asRealVector2D;
     obstacles.do{|obstacle|
-      vec = vec - ((obstacle[0]+pos)*obstacle[1]);
+      vec = vec + ((obstacle[0]+pos)*obstacle[1]);
     };
     ^vec; // return the vector
   }
