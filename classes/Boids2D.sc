@@ -110,12 +110,11 @@ Boids2D {
     };
   }
 
-  addBoid {|nodeID|
-    var initPos, boid;
-    initPos = RealVector.rand2D(bounds[0][0] * -0.5, bounds[0][1]*0.5, bounds[1][0] * -0.5, bounds[1][1]*0.5).asRealVector2D; // get a random vector position
-    initPos = centerOfMass + initPos.limit(maxVelocity*2); // place it near the center of the flock
-    boid = BoidUnit2D.new(pos: initPos, maxVelocity: workingMaxVelocity)
-      .bounds_(bounds) // make it
+  addBoid {|initPos|
+    var boid, initVel;
+    initPos = initPos ? centerOfMass; // place it near the center of the flock
+    initVel = RealVector2D.newFrom(Array.fill(2, {rrand(0.0,3.0)})); // random velocity
+    boid = BoidUnit2D.new(initVel, initPos, bounds, centerOfMass, workingMaxVelocity)
       .useInnerBounds_(useInnerBounds)
       .innerBounds_(innerBounds);
     boidList.add(boid); // add it
@@ -416,15 +415,11 @@ Boids2D {
 // not directly used but rather used by Boids
 ////////////////////////////////////////////////////////////
 BoidUnit2D {
-  var <>vel, <>pos, <maxVelocity, <nodeID, <centerOfMass;
-  var <>centerInstinct, <>innerDistance, <>matchVelocity, <bounds, <>useInnerBounds, <>innerBounds;
+  var <>vel, <>pos, <bounds, <centerOfMass, <maxVelocity;
+  var <>centerInstinct, <>innerDistance, <>matchVelocity, <>useInnerBounds, <>innerBounds;
 
-  // perhaps set an independence value, such that this weight value is the weight of a random vector added to the final
-  // position of the boid? In that way, the vector calculated from the rest of the flock can be diminished and the
-  // random value can be added so it has more perceived independence
-
-  *new {|vel, pos, maxVelocity = 5|
-    ^super.newCopyArgs(vel, pos, maxVelocity).init;
+  *new {|vel, pos, bounds, centerOfMass, maxVelocity = 5|
+    ^super.newCopyArgs(vel, pos, bounds, centerOfMass, maxVelocity).init;
   }
 
   *rand {|bounds, centerOfMass, innerDistance, matchVelocity, maxVelocity = 5|
@@ -432,10 +427,10 @@ BoidUnit2D {
   }
 
   init {|...args|
-    bounds = args[0] ? [[-500,500],[-500,500]]; // [ [xmin, xmax], [ymin, ymax]]
-    vel = vel ? RealVector.rand2D(-5,5,-5,5).asRealVector2D;
+    bounds = bounds ? args[0] ? [[-500,500],[-500,500]]; // [ [xmin, xmax], [ymin, ymax]]
+    vel = vel ? RealVector2D.newFrom(Array.fill(2, {rrand(0.0,3.0)}));
     pos = pos ? RealVector.rand2D(bounds[0][0],bounds[0][1],bounds[1][0],bounds[1][1]).asRealVector2D;
-    maxVelocity = args[4] ? 5;
+    maxVelocity = maxVelocity ? args[4] ? 5; // max velocity
 
     // if these are not set, set them
     centerOfMass = args[1] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
