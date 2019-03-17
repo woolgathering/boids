@@ -57,7 +57,7 @@ Boids2D {
   prGetInnerDistance {
     boidList.do{|boid|
       var vec, dist, count;
-      vec = RealVector.zero(2).asRealVector2D; // a new zero vector
+      vec = RealVector2D.newFrom([0,0]); // a new zero vector
       count = 1;
       boidList.do{|thisBoid|
         // var tmpVec = RealVector.zero(2).asRealVector2D;
@@ -68,21 +68,14 @@ Boids2D {
           if (abs(dist) < minSpace) {
             ///// original ///////
             // vec = vec - ((boid.pos-thisBoid.pos)/abs(dist)); // calculate the difference vector
-            vec = vec - ((boid.pos-thisBoid.pos)*(minSpace/dist.pow(2))); // calculate the difference vector
+            vec = vec + ((boid.pos-thisBoid.pos)*(minSpace/(dist**2))); // calculate the difference vector
             /////////////////////
-
-            // vec = vec - (thisBoid.pos-boid.pos); // calculate the difference vector
-            // tmpVec = boid.pos-thisBoid.pos;
-            // tmpVec = tmpVec.norm/abs(dist);
-            // tmpVec = thisBoid.pos - boid.pos;
-            // vec = vec + tmpVec;
-
-            count = count+1;
+            count = count+1; // keep counting the boids in the vicinity
           };
         };
       };
-    vec = vec/count; // average
-    boid.innerDistance = innerDistance * vec; // set the innerDistance vector in each BoidUnit
+      vec = vec/count; // average
+      boid.innerDistance = innerDistance * vec; // set the innerDistance vector in each BoidUnit
     };
   }
 
