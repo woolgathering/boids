@@ -315,7 +315,7 @@ Boids2D {
       };
 
       ////////
-      // plot the targets as blue squares
+      // plot the targets as blue circles
       ////////
       targets.do{|target, i|
         var normalizedPos, color;
@@ -337,7 +337,7 @@ Boids2D {
       };
 
       ////////
-      // plot the obstacles as red squares
+      // plot the obstacles as red circles
       ////////
       obstacles.do{|obstacle, i|
         var normalizedPos, color;
