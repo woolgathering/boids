@@ -309,7 +309,7 @@ Boids2D {
         // Pen.addOval(Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5));
         Pen.addWedge(
           Point(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1]), // point
-          10, // radius (pixels)
+          7.5, // radius (pixels)
           (-1*boid.vel.theta) - 3.5342917352885, // start angle (angle - pi/8 - pi) for visualizer corrections
           // (-1*boid.vel.theta) - (pi/8) - pi, // start angle (angle - pi/8 - pi) for visualizer corrections
           0.78539816339745 // size of angle (pi/4)
@@ -334,7 +334,7 @@ Boids2D {
         ];
         normalizedPos = [normalizedPos[0], 1 - normalizedPos[1]];
         // normalizedPos.postln;
-        Pen.addRect(
+        Pen.addOval(
           Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
         );
         if(showLabels) {
@@ -356,7 +356,7 @@ Boids2D {
         ];
         normalizedPos = [normalizedPos[0], 1 - normalizedPos[1]];
 
-        Pen.addRect(
+        Pen.addOval(
           Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
         );
         if(showLabels) {
