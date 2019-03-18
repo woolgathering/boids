@@ -441,23 +441,23 @@ BoidUnit2D {
   }
 
   bound {
-    2.collect{|i|
-      var amount = 0;
     var vec = RealVector2D.zero; // a zero vector
+    2.do{|i|
+      var amount;
       if(pos[i] < bounds[i][0]) {
-          amount = bounds[i][0] + pos[i].abs; // how far off are we
-          amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
-        }
-        {
-          if(pos[i] > bounds[i][1]) {
-            amount = bounds[i][1] - pos[i]; // how far off are we
-            amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
-          };
+        amount = bounds[i][0] + pos[i].abs; // how far off are we
+        // amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
+        // amount = maxVelocity * (amount/maxVelocity); // scale it according to how far off we are
+        vec[i] = amount; // change zero for this
+      } {
+        if(pos[i] > bounds[i][1]) {
+          amount = bounds[i][1] - pos[i]; // how far off are we
+          // amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
+          // amount = maxVelocity * (amount/maxVelocity); // scale it according to how far off we are
+          vec[i] = amount; // change zero for this
         };
-      vec.add(amount); // add it to the list
+      };
     };
-
-    vec = RealVector2D.newFrom(vec.asArray);
     vel = vel + vec; // add the vectors in velocity-space
   }
 
