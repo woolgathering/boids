@@ -299,12 +299,10 @@ Boids2D {
           (boid.pos.x+bounds[0][0].abs)/(bounds[0][0].abs*2),
           1 - ((boid.pos.y+bounds[1][0].abs)/(bounds[1][0].abs*2))
         ];
-        // Pen.addOval(Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5));
         Pen.addWedge(
           Point(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1]), // point
           7.5, // radius (pixels)
-          (-1*boid.vel.theta) - 3.5342917352885, // start angle (angle - pi/8 - pi) for visualizer corrections
-          // (-1*boid.vel.theta) - (pi/8) - pi, // start angle (angle - pi/8 - pi) for visualizer corrections
+          (-1*boid.vel.theta) - 3.5342917352885, // start angle (angle - sizeOfAngle/2 (pi/8) - pi) for visualizer corrections
           0.78539816339745 // size of angle (pi/4)
         );
         // show labels on the boids
@@ -446,14 +444,10 @@ BoidUnit2D {
       var amount;
       if(pos[i] < bounds[i][0]) {
         amount = bounds[i][0] + pos[i].abs; // how far off are we
-        // amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
-        // amount = maxVelocity * (amount/maxVelocity); // scale it according to how far off we are
         vec[i] = amount; // change zero for this
       } {
         if(pos[i] > bounds[i][1]) {
           amount = bounds[i][1] - pos[i]; // how far off are we
-          // amount = maxVelocity * (amount/maxVelocity).min(1); // scale it according to how far off we are
-          // amount = maxVelocity * (amount/maxVelocity); // scale it according to how far off we are
           vec[i] = amount; // change zero for this
         };
       };
