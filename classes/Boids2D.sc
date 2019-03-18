@@ -516,10 +516,9 @@ BoidUnit2D {
   }
 
   moveBoid {|targets, obstacles|
-    vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
-    // if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
     if (targets.isEmpty.not) {vel = vel + this.calcTargetsWithField(targets)}; // if there are targets, calculate the vector
     if (obstacles.isEmpty.not) {vel = vel + this.calcObstaclesWithField(obstacles)}; // if there are obstacles, calculate the vector
+    vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
     this.bound; // bound the coordinates
     if (useInnerBounds) {this.innerBound}; // only do the inner bounds when we want
     vel = vel.limit(maxVelocity); // speed limit
