@@ -394,6 +394,10 @@ Boids2D {
     ^boidList.asArray;
   }
 
+  boids {
+    ^boidList.asArray;
+  }
+
   targets {
     ^targets.asArray;
   }
