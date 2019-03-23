@@ -6,7 +6,7 @@
   Usage:
 
     b = Boids(numBoids: 10); // an initial number of boids. Flock size can be arbitrarily increased by using addBoid()
-    f = {|thisInstance, boids|
+    f = {|thisInstance|
       thisInstace.info; // print info about this flock
       boids.postln; // the list of BoidUnits
     };
@@ -54,9 +54,8 @@ Boids2D {
     boidList.do{|boid|
       var vec, dist, count;
       vec = RealVector2D.newFrom([0,0]); // a new zero vector
-      count = 1;
+      count = 1; // count the number of boids nearby to scale
       boidList.do{|thisBoid|
-        // var tmpVec = RealVector2D.zero;
         // don't check for boids that are the exact same object
         if ((boid === thisBoid).not) {
           dist = boid.pos.dist(thisBoid.pos); // get the distance between these boids
@@ -89,7 +88,6 @@ Boids2D {
   }
 
   prFillBoidList {|num|
-    // could instead pass an array of Nodes from which the NodeID's could be extracted and passed...
     num.do{
       var boid;
       boid = BoidUnit2D.rand(bounds, centerInstinct, innerDistance, matchVelocity, workingMaxVelocity);
@@ -134,7 +132,6 @@ Boids2D {
     this.prGetCenterOfMass; // rule 1
     this.prGetInnerDistance; // rule 2
     this.prGetVelocityMatch; // rule 3
-
     func.(this); // evaluate the function while passing this instance
   }
 
@@ -170,10 +167,10 @@ Boids2D {
   ///////////////////////////////////
   // targeting
   ///////////////////////////////////
-  addTarget {|vector, gravity|
-    if(vector.isNil or: gravity.isNil)
-      {"Insuffient arguments: %, %: no target was added!".format(vector, gravity).warn; ^this};
-    targets.add([RealVector2D.newFrom(vector[..1]), gravity]);
+  addTarget {|pos, gravity|
+    if(pos.isNil or: gravity.isNil)
+      {"Insuffient arguments: %, %: no target was added!".format(pos, gravity).warn; ^this};
+    targets.add(Dictionary.with(*[\pos->RealVector2D.newFrom(pos[..1]), \strength->gravity]));
   }
 
   clearTargets {
@@ -188,19 +185,19 @@ Boids2D {
     };
   }
 
-  editTarget {|index, target, gravity|
+  editTarget {|index, pos, gravity|
     if(index.isNil) {"Index is nil: no targets were edited!".warn}; // throw a warning if insufficent args were supplied
-    if(target.notNil) {targets[index][0] = RealVector2D.newFrom(target[..1])}; // should check here if target is a Vector or not
-    if(gravity.notNil) {targets[index][1] = gravity}; // edit the gravity parameter
+    if(pos.notNil) {targets[index].add(\pos->RealVector2D.newFrom(pos[..1]))}; // should check here if target is a Vector or not
+    if(gravity.notNil) {targets[index].add(\strength->gravity)}; // edit the gravity parameter
   }
 
   /////////////////////////////////////////
   ///// obstacles
   //////////////////////////////////////////
-  addObstacle {|vector, repulsion|
-    if(vector.isNil or: repulsion.isNil)
-      {"Insuffient arguments: %, %: no obstacle was added!".format(vector, repulsion).warn; ^this};
-    obstacles.add([RealVector2D.newFrom(vector[..1]), repulsion]); // add a new obstacle
+  addObstacle {|pos, repulsion|
+    if(pos.isNil or: repulsion.isNil)
+      {"Insuffient arguments: %, %: no obstacle was added!".format(pos, repulsion).warn; ^this};
+    obstacles.add(Dictionary.with(*[\pos->RealVector2D.newFrom(pos[..1]), \strength->repulsion]));
   }
 
   clearObstacles {
@@ -217,8 +214,8 @@ Boids2D {
 
   editObstacle {|index, obstacle, repulsion|
     if(index.isNil) {"Index is nil: no obstacles were edited!".warn}; // throw a warning if insufficent args were supplied
-    if(obstacle.notNil) {obstacles[index][0] = RealVector2D.newFrom(obstacle[..1])}; // should check here if target is a Vector or not
-    if(repulsion.notNil) {obstacles[index][1] = repulsion}; // edit the repulsion parameter
+    if(obstacle.notNil) {obstacles[index].add(\pos->RealVector2D.newFrom(obstacle[..1]))}; // should check here if target is a Vector or not
+    if(repulsion.notNil) {obstacles[index].add(\strength->repulsion)}; // edit the repulsion parameter
   }
 
   // print the variable information for this flock
@@ -292,11 +289,10 @@ Boids2D {
         color = Color.fromHexString("4989FF");
         Pen.color = color;
         normalizedPos = [
-          (target[0].x+bounds[0][0].abs)/(bounds[0][0].abs*2),
-          (target[0].y+bounds[1][0].abs)/(bounds[1][0].abs*2)
+          (target.at(\pos).x+bounds[0][0].abs)/(bounds[0][0].abs*2),
+          (target.at(\pos).y+bounds[1][0].abs)/(bounds[1][0].abs*2)
         ];
         normalizedPos = [normalizedPos[0], 1 - normalizedPos[1]];
-        // normalizedPos.postln;
         Pen.addOval(
           Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
         );
@@ -314,8 +310,8 @@ Boids2D {
         color = Color.fromHexString("FF4949");
         Pen.color = color;
         normalizedPos = [
-          (obstacle[0].x+bounds[0][0].abs)/(bounds[0][0].abs*2),
-          (obstacle[0].y+bounds[1][0].abs)/(bounds[1][0].abs*2)
+          (obstacle.at(\pos).x+bounds[0][0].abs)/(bounds[0][0].abs*2),
+          (obstacle.at(\pos).y+bounds[1][0].abs)/(bounds[1][0].abs*2)
         ];
         normalizedPos = [normalizedPos[0], 1 - normalizedPos[1]];
 
@@ -424,8 +420,8 @@ BoidUnit2D {
   }
 
   moveBoid {|targets, obstacles|
-    if (targets.isEmpty.not) {vel = vel + this.calcTargetsWithField(targets)}; // if there are targets, calculate the vector
-    if (obstacles.isEmpty.not) {vel = vel + this.calcObstaclesWithField(obstacles)}; // if there are obstacles, calculate the vector
+    if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
+    if (obstacles.isEmpty.not) {vel = vel + this.calcObstacles(obstacles)}; // if there are obstacles, calculate the vector
     vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
     this.bound; // bound the coordinates
     vel = vel.limit(maxVelocity); // speed limit
@@ -438,14 +434,6 @@ BoidUnit2D {
   }
 
   calcObstacles {|obstacles|
-    var vec = RealVector2D.zero;
-    obstacles.do{|obstacle|
-      vec = vec + ((obstacle[0]+pos)*obstacle[1]);
-    };
-    ^vec; // return the vector
-  }
-
-  calcObstaclesWithField {|obstacles|
     var vec = RealVector2D.zero, distFromTarget, gravity, diff;
     obstacles.do{|obstacle|
       vec = this.prCalcVec(obstacle, vec, \obstacle);
@@ -454,14 +442,6 @@ BoidUnit2D {
   }
 
   calcTargets {|targets|
-    var vec = RealVector2D.zero;
-    targets.do{|target|
-      vec = vec + ((target[0]-pos)*target[1]);
-    };
-    ^vec; // return the vector
-  }
-
-  calcTargetsWithField {|targets|
     var vec = RealVector2D.zero, distFromTarget, gravity, diff;
     targets.do{|target|
       vec = this.prCalcVec(target, vec, \target);
@@ -471,15 +451,15 @@ BoidUnit2D {
 
   prCalcVec {|object, vec, type|
     var distFromTarget, diff, gravity;
-    distFromTarget = pos.dist(object[0]).max(0.001);
+    distFromTarget = pos.dist(object.at(\pos)).max(0.001); // get the distance from the object
     switch (type)
       {\target} {
-        diff = object[0]-pos;
-        gravity = ((object[1]*100)/distFromTarget).max(0); // 1/r
+        diff = object.at(\pos)-pos; // get the diff
+        gravity = ((object.at(\strength)*100)/distFromTarget).max(0); // 1/r
       }
       {\obstacle} {
-        diff = pos-object[0];
-        gravity = this.prInverseSquare(distFromTarget, object[1]*1000).max(0); // 1/r^2
+        diff = pos-object.at(\pos); // get the diff
+        gravity = this.prInverseSquare(distFromTarget, object.at(\strength)*1000).max(0); // 1/r^2
       };
     ^vec + ((diff/diff.norm)*gravity); // return
   }
