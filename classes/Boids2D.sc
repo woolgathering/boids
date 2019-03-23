@@ -401,24 +401,6 @@ BoidUnit2D {
     vel = vel + vec; // add the vectors in velocity-space
   }
 
-  cirlceBound {
-    var vec, radius, dist, diff, zero, gravity;
-    zero = RealVector2D.zero;
-    radius = bounds[0][1]; // get a radius from the origin to a side
-    dist = pos.dist(zero); // get the distance between this and the origin
-
-    // if the distance is greater than the radius, then add another vector that points to the origin
-    if(dist>radius) {
-      diff = dist-radius; // get the difference
-      // vec = RealVector2D.zero + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 1.0, 0.5, \min)); // make a new vector and scale it
-      // vec = RealVector2D.zero + ((zero-pos)*diff.lincurve(1, 20.0, 0.01, 5.0, 0.5)*maxVelocity); // make a new vector and scale it
-      // vec = RealVector2D.zero + (zero-pos); // make a new vector and scale it
-      vec = (RealVector2D.zero + (zero-pos)) * (diff/maxVelocity).min(1); // make a new vector and scale it
-      vec = vec.limit(maxVelocity);
-      vel = vel + vec; // add it
-    };
-  }
-
   moveBoid {|targets, obstacles|
     if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
     if (obstacles.isEmpty.not) {vel = vel + this.calcObstacles(obstacles)}; // if there are obstacles, calculate the vector
