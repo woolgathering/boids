@@ -533,13 +533,9 @@ BoidUnit2D {
   }
 
   calcObstaclesWithField {|obstacles|
-    var vec = RealVector2D.zero, distFromTarget, gravity;
-    obstacles.do{|obstacale|
-      distFromTarget = pos.dist(obstacale[0]).max(1); // get the distance from this boid to the obstacale
-      // gravity = this.inverseSquare(distFromTarget, obstacale[1]).clip(0,1); // exponential decay
-      // gravity = this.arcTan(distFromTarget, obstacale[1]*10).clip(0,1);
-      gravity = this.arcTan2(distFromTarget, obstacale[1]).clip(0,1);
-      vec = vec + ((obstacale[0]+pos)*gravity);
+    var vec = RealVector2D.zero, distFromTarget, gravity, diff;
+    obstacles.do{|obstacle|
+      vec = this.prCalcVec(obstacle, vec, \obstacle);
     };
     ^vec; // return the vector
   }
@@ -553,30 +549,43 @@ BoidUnit2D {
   }
 
   calcTargetsWithField {|targets|
-    var vec = RealVector2D.zero, distFromTarget, gravity;
+    var vec = RealVector2D.zero, distFromTarget, gravity, diff;
     targets.do{|target|
-      distFromTarget = pos.dist(target[0]).max(1); // get the distance from this boid to the target
-      gravity = this.inverseSquare(distFromTarget, target[1]*100).clip(0,1); // must multiply by 100??
-      vec = vec + ((target[0]-pos)*gravity);
+      vec = this.prCalcVec(target, vec, \target);
     };
     ^vec; // return the vector
+  }
+
+  prCalcVec {|object, vec, type|
+    var distFromTarget, diff, gravity;
+    distFromTarget = pos.dist(object[0]).max(0.001);
+    switch (type)
+      {\target} {
+        diff = object[0]-pos;
+        gravity = ((object[1]*100)/distFromTarget).max(0); // 1/r
+      }
+      {\obstacle} {
+        diff = pos-object[0];
+        gravity = this.prInverseSquare(distFromTarget, object[1]*1000).max(0); // 1/r^2
+      };
+    ^vec + ((diff/diff.norm)*gravity); // return
   }
 
   /////////////////////////////////
   // gravity/repulsion scaling functions
   /////////////////////////////////
-  inverseSquare {|dist = 1, gravity = 1|
+  prInverseSquare {|dist = 1, gravity = 1|
     ^gravity/(dist**2);
   }
 
-  arcTan {|dist = 1, gravity = 1, scalar = 10|
+  prArcTan {|dist = 1, gravity = 1, scalar = 10|
     gravity = gravity.reciprocal*scalar;
     dist = (dist*gravity)-gravity;
     gravity = atan(-1*dist);
     ^(gravity/3)+0.5;
   }
 
-  arcTan2 {|dist = 1, gravity = 1, scalar = 5|
+  prArcTan2 {|dist = 1, gravity = 1, scalar = 5|
     // scalar is where the arctangent function passes through 0 normally
     dist = (dist-(gravity*scalar));
     gravity = atan(-1*dist*gravity.reciprocal);
