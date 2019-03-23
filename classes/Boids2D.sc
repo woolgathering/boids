@@ -17,7 +17,7 @@
 Boids2D {
   var <>numBoids, <>timestep, <>centerInstinct, <>innerDistance, <>matchVelocity, <centerOfMass;
   var >boidList, <maxVelocity, workingMaxVelocity, <minSpace, targets, obstacles;
-  var <bounds, <innerBoundRatio, <useInnerBounds, <innerBounds;
+  var <bounds;
 
   *new {|numBoids = 10, timestep = 0.5, centerInstinct = 1, innerDistance = 1, matchVelocity = 1|
     ^super.newCopyArgs(numBoids, timestep, centerInstinct, innerDistance, matchVelocity).init;
@@ -30,11 +30,7 @@ Boids2D {
     minSpace = 1; // minmum distance between boids in a flock in meters
     centerOfMass = RealVector2D.zero; // init center of mass at the origin
     bounds = [[-500,500], [-500,500]]; // set the default bounds
-    useInnerBounds = false; // default to not using the inner bounds
-    innerBoundRatio = 0.1; // default to 10%
-    innerBounds = innerBoundRatio * bounds; // for ease of getting and setting
     this.prFillBoidList(numBoids); // fill the list with boids
-
     targets = List.new(0);
     obstacles = List.new(0);
   }
@@ -96,9 +92,7 @@ Boids2D {
     // could instead pass an array of Nodes from which the NodeID's could be extracted and passed...
     num.do{
       var boid;
-      boid = BoidUnit2D.rand(bounds, centerInstinct, innerDistance, matchVelocity, workingMaxVelocity)
-        .useInnerBounds_(useInnerBounds)
-        .innerBounds_(innerBounds);
+      boid = BoidUnit2D.rand(bounds, centerInstinct, innerDistance, matchVelocity, workingMaxVelocity);
       boidList.add(boid); // add it to the list
     };
   }
@@ -107,9 +101,7 @@ Boids2D {
     var boid, initVel;
     initPos = initPos ? centerOfMass; // place it near the center of the flock
     initVel = RealVector2D.newFrom(Array.fill(2, {rrand(0.0,3.0)})); // random velocity
-    boid = BoidUnit2D.new(initVel, initPos, bounds, centerOfMass, workingMaxVelocity)
-      .useInnerBounds_(useInnerBounds)
-      .innerBounds_(innerBounds);
+    boid = BoidUnit2D.new(initVel, initPos, bounds, centerOfMass, workingMaxVelocity);
     boidList.add(boid); // add it
   }
 
@@ -169,11 +161,9 @@ Boids2D {
     // create the bounds of a rectangle with the given dimensions with the origin at the center
     rect = [[-0.5*xLen, 0.5*xLen], [-0.5*yLen, 0.5*yLen]];
     bounds = rect; // set the new bounds
-    innerBounds = bounds * innerBoundRatio; // recompute the innerBounds
     // set the bounds in each BoidUnit
     boidList.do{|boid|
       boid.bounds = bounds; // set it in each Boid
-      boid.innerBounds = innerBounds;
     };
   }
 
@@ -260,24 +250,6 @@ Boids2D {
     this.prGetInnerDistance;
   }
 
-  innerBoundRatio_ {|val|
-    if (val>0.95) {"Clipped innerBoundRatio to 0.95".warn}; // tell if we're doing something dumb
-    innerBoundRatio = val.clip(0,0.95); // clip it
-    innerBounds = bounds * innerBoundRatio; // for easer getting
-    boidList.do(_.innerBounds_(innerBounds)); // set it in the BoidUnits internally
-  }
-
-  useInnerBounds_ {|boolean|
-    useInnerBounds = boolean; // set it
-    boidList.do(_.useInnerBounds_(useInnerBounds)); // set it for each BoidUnit
-  }
-
-  // don't let us set the inner bounds manually (for now?)
-  innerBounds_ {
-    "set innerBounds with innerBoundRatio!".warn;
-    ^this;
-  }
-
   // visualizer
   visualizer {|showLabels = false, returnWindow = false|
     var window, loop, availableBounds, size;
@@ -355,26 +327,6 @@ Boids2D {
         };
         Pen.perform(\fill);
       };
-
-      ////////
-      // plot the inner bounds as an unfilled square
-      ////////
-      // {
-      //   var verticies, size;
-      //   size = innerBounds[0][1];
-      //   size = size/(bounds[1][1]*2); // normalize it
-      //   verticies = [
-      //     Point((-1*size)/2, (-1*size)/2),
-      //     Point(size/2, size/2),
-      //     Point(size/2, (-1*size)/2),
-      //     Point((-1*size)/2, size/2)
-      //   ];
-      //   Pen.color = Color.grey;
-      //   Pen.addRect(
-      //     Rect(verticies[0].x, verticies[0].y, size, size);
-      //   );
-      //   Pen.perform(\stroke);
-      // }.value;
     };
 
     loop = {
@@ -411,7 +363,7 @@ Boids2D {
 ////////////////////////////////////////////////////////////
 BoidUnit2D {
   var <>vel, <>pos, <bounds, <centerOfMass, <maxVelocity;
-  var <>centerInstinct, <>innerDistance, <>matchVelocity, <>useInnerBounds, <>innerBounds;
+  var <>centerInstinct, <>innerDistance, <>matchVelocity;
 
   *new {|vel, pos, bounds, centerOfMass, maxVelocity = 5|
     ^super.newCopyArgs(vel, pos, bounds, centerOfMass, maxVelocity).init;
@@ -434,8 +386,6 @@ BoidUnit2D {
 
     centerInstinct = centerOfMass/100; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
-    useInnerBounds = false; // default to not using an inner bound method
-    innerBounds = bounds * 0.1; // calculate the size as default
   }
 
   bound {
@@ -473,48 +423,11 @@ BoidUnit2D {
     };
   }
 
-  // an inner bound. Useful when using as a spatializer
-  innerBound {
-    var vec, thisX = 0, thisY = 0;
-    // along the x-axis
-    if ((pos.x > innerBounds[0][0]) and: (pos.x < innerBounds[0][1])) {
-      /*
-      // get the scalar for the x-axis
-      dist = dist(pos,zero);
-      ratio = 1 - (dist/innerBounds[0][1]); // use the positive number since they're both the same
-      scalar = innerBoundScalar * ratio; // multiply by the "anti-gravity"
-
-      .... then
-
-      thisX = scalar * maxVelocity;
-      thisX = -1 * scalar * maxVelocity;
-      */
-      if (pos.x >= 0) {
-        thisX = maxVelocity; // move right
-      } {
-        thisX = -1*maxVelocity; // move left
-      };
-    };
-    // along the y-axis
-    if ((pos.y > innerBounds[1][0]) and: (pos.y < innerBounds[1][1])) {
-      if (pos.y >= 0) {
-        thisY = maxVelocity; // move up
-      } {
-        thisY = -1*maxVelocity; // move down
-      };
-    };
-
-    // "Calculating inner bound...".postln;
-    vec = RealVector2D.newFrom([thisX,thisY]);
-    pos = pos + vec; // add the vectors
-  }
-
   moveBoid {|targets, obstacles|
     if (targets.isEmpty.not) {vel = vel + this.calcTargetsWithField(targets)}; // if there are targets, calculate the vector
     if (obstacles.isEmpty.not) {vel = vel + this.calcObstaclesWithField(obstacles)}; // if there are obstacles, calculate the vector
     vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
     this.bound; // bound the coordinates
-    if (useInnerBounds) {this.innerBound}; // only do the inner bounds when we want
     vel = vel.limit(maxVelocity); // speed limit
     pos = pos + vel; // get the new position
   }
@@ -608,6 +521,5 @@ BoidUnit2D {
 
   bounds_ {|val|
     bounds = val;
-    // innerBounds = bounds * innerBoundRatio;
   }
 }
