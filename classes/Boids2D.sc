@@ -249,77 +249,66 @@ Boids2D {
 
   // visualizer
   visualizer {|showLabels = false, returnWindow = false|
-    var window, loop, availableBounds, size;
+    var window, loop, availableBounds, size, getNormalizedPos, makeCircle, makeLabel;
     availableBounds = Window.availableBounds;
     size = availableBounds.width/3;
     window = Window("Flock Visualizer", Rect(availableBounds.width-size,availableBounds.height-size,size,size)).front;
     window.view.background_(Color.white);
 
-    // draw the boids (as squares for now)
+    getNormalizedPos = {|pos|
+      [(pos.x+bounds[0][0].abs)/(bounds[0][0].abs*2), 1 - ((pos.y+bounds[1][0].abs)/(bounds[1][0].abs*2))];
+    };
+
+    makeCircle = {|normalizedPos|
+      Pen.addOval(Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5));
+    };
+
+    makeLabel = {|label, normalizedPos, color|
+      Pen.stringAtPoint(label.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: color);
+    };
+
+    // draw the boids
     window.drawFunc = {
-      ////////
-      // plot the boids as black squares ////////
-      ////////
+      // plot the boids as black wedges
       boidList.do{|boid, i|
-        var normalizedPos;
-        Pen.color = Color.black;
-        // normalize the position for the window
-        normalizedPos = [
-          (boid.pos.x+bounds[0][0].abs)/(bounds[0][0].abs*2),
-          1 - ((boid.pos.y+bounds[1][0].abs)/(bounds[1][0].abs*2))
-        ];
+        var normalizedPos, color;
+        color = Color.black;
+        Pen.color = color;
+        normalizedPos = getNormalizedPos.(boid.pos); // normalize the position for the window
         Pen.addWedge(
           Point(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1]), // point
           7.5, // radius (pixels)
           (-1*boid.vel.theta) - 3.5342917352885, // start angle (angle - sizeOfAngle/2 (pi/8) - pi) for visualizer corrections
           0.78539816339745 // size of angle (pi/4)
         );
-        // show labels on the boids
         if(showLabels) {
-          Pen.stringAtPoint(i.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: Color.black);
+          makeLabel.(i, normalizedPos, color); // make a label
         };
         Pen.perform(\fill);
       };
 
-      ////////
       // plot the targets as blue circles
-      ////////
       targets.do{|target, i|
         var normalizedPos, color;
         color = Color.fromHexString("4989FF");
         Pen.color = color;
-        normalizedPos = [
-          (target.at(\pos).x+bounds[0][0].abs)/(bounds[0][0].abs*2),
-          (target.at(\pos).y+bounds[1][0].abs)/(bounds[1][0].abs*2)
-        ];
-        normalizedPos = [normalizedPos[0], 1 - normalizedPos[1]];
-        Pen.addOval(
-          Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
-        );
+        normalizedPos = getNormalizedPos.(target.at(\pos)); // normalize the position for the window
+        makeCircle.(normalizedPos);
         if(showLabels) {
-          Pen.stringAtPoint(i.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: color);
+          makeLabel.(i, normalizedPos, color); // make a label
         };
         Pen.perform(\fill);
       };
 
-      ////////
       // plot the obstacles as red circles
-      ////////
       obstacles.do{|obstacle, i|
         var normalizedPos, color;
         color = Color.fromHexString("FF4949");
         Pen.color = color;
-        normalizedPos = [
-          (obstacle.at(\pos).x+bounds[0][0].abs)/(bounds[0][0].abs*2),
-          (obstacle.at(\pos).y+bounds[1][0].abs)/(bounds[1][0].abs*2)
-        ];
-        normalizedPos = [normalizedPos[0], 1 - normalizedPos[1]];
-
-        Pen.addOval(
-          Rect(window.bounds.width*normalizedPos[0], window.bounds.height*normalizedPos[1], 5, 5);
-        );
+        normalizedPos = getNormalizedPos.(obstacle.at(\pos)); // normalize the position for the window
+        makeCircle.(normalizedPos);
         if(showLabels) {
-          Pen.stringAtPoint(i.asString, Point(window.bounds.width*normalizedPos[0] + 3, window.bounds.height*normalizedPos[1] + 3), color: color);
+          makeLabel.(i, normalizedPos, color); // make a label
         };
         Pen.perform(\fill);
       };
