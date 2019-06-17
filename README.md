@@ -9,6 +9,7 @@ Yes, dependencies. For Boids2D to work you need my fork of [VectorSpace](https:/
 - Automator
 - Boids2D
 - WriteFFT
+- SinglePole
 
 ### Class Extensions
 - Array
