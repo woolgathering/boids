@@ -2,50 +2,63 @@
 // useful to smooth out values
 
 SinglePole {
-  var <>coeff, <>sr, <output;
+  var <>cutoff, <>sr, <output, <a0, <b1;
 
-  *new {|coeff = 0.999, sr = 1024|
-    ^super.newCopyArgs(coeff, sr).init;
+  *new {|cutoff = 100, sr = 1024|
+    ^super.newCopyArgs(cutoff, sr).init;
   }
 
   init {
     output = 0; // initialize x
+    this.setWithCutoffFreq(cutoff);
   }
 
-  setWithTimeConstant {|time = 0.1|
-    // be mindful of the samplerate (sr)
-    coeff = 1 - exp(-1/(sr*time)); // set it with time
-  }
-
-  setWithCutoffFreq {|freq = 10|
-    // be mindful of the samplerate (sr)
-    coeff = 1 - exp(-2*pi*freq); // set it with frequency
+  compute {|input|
+    // output = output + (cutoff*(input-output)); // calculate
+    output = (input*a0) + (output*b1);
+    ^output; // return the output
   }
 
 }
 
 SinglePoleLP : SinglePole {
 
-  *new {|coeff = 0.999, sr = 1024|
-    ^super.newCopyArgs(coeff, sr).init;
+  *new {|cutoff = 100, sr = 1024|
+    ^super.newCopyArgs(cutoff, sr).init;
   }
 
-  compute {|input|
-    output = output + (coeff*(input-output)); // calculate
-    ^output; // return the output
+  setWithCutoffFreq {|freq = 10|
+    // be mindful of the samplerate (sr)
+    freq = freq/sr;
+    b1 = exp(-2*pi*freq); // set it with frequency
+    a0 = 1 - b1.abs;
+  }
+
+  setWithTimeConstant {|time = 0.1|
+    // be mindful of the samplerate (sr)
+    b1 = exp(-1/(sr*time)); // set it with time
+    a0 = 1 - b1.abs;
   }
 
 }
 
 SinglePoleHP : SinglePole {
 
-  *new {|coeff = 0.999, sr = 1024|
-    ^super.newCopyArgs(coeff, sr).init;
+  *new {|cutoff = 100, sr = 1024|
+    ^super.newCopyArgs(cutoff, sr).init;
   }
 
-  compute {|input|
-    output = output + (coeff*(input+output)); // calculate
-    ^output; // return the output
+  setWithCutoffFreq {|freq = 10|
+    // be mindful of the samplerate (sr)
+    freq = freq/sr;
+    b1 = -1 * exp(-2*pi*(0.5-freq)); // set it with frequency
+    a0 = 1 + b1.abs;
+  }
+
+  setWithTimeConstant {|time = 0.1|
+    // be mindful of the samplerate (sr)
+    b1 = -1 * exp(-1/(sr*time)); // set it with time
+    a0 = 1 + b1.abs;
   }
 
 }
