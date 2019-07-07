@@ -15,7 +15,7 @@
 
 
 Boids2D {
-  var <numBoids, <>timestep, <>centerInstinct, <>innerDistance, <>matchVelocity, <centerOfMass;
+  var <numBoids, <>timestep, <>centerInstinct, <>innerDistance, <>matchVelocity, <centerOfMass, <centerOfVel;
   var >boidList, <maxVelocity, workingMaxVelocity, <minSpace, targets, obstacles;
   var <bounds;
 
@@ -87,6 +87,85 @@ Boids2D {
     };
   }
 
+  // optimized version of the rules
+  prDoRules {
+  	var posSum = RealVector2D.zero, velSum = RealVector2D.zero;
+
+  	// for each boidUnit...
+  	boidList.do{|thisBoid, i|
+  		var neighbors, vec, count, nearestNeighbors, velAvg, posAvg, nIdx;
+  		neighbors = Array.newClear(numBoids-1);
+      nIdx = 0; // index for neighbors
+  		vec = RealVector2D.zero; // for rule 2
+  		count = 1; // for rule 2
+
+  		// get some averages
+  		posSum = posSum + thisBoid.pos; // sum the position
+  		velSum = velSum + thisBoid.vel; // sum the velocities
+
+  		// loop again
+  		boidList.do{|thatBoid, j|
+        var dist;
+  			// don't check for boids that are the exact same object
+  			if ((thisBoid === thatBoid).not) {
+  				// get the distances to the other boids
+  				dist = thisBoid.dist(thatBoid); // get their distance
+  				neighbors[nIdx] = Dictionary[\pos->thatBoid.pos, \vel->thatBoid.vel, \dist->dist]; // store in a dictionary
+
+  				////////////////////////////////////////////////////
+  				//////// RULE 1 ////////////////////////////////////
+  				////////////////////////////////////////////////////
+  				// nothing else to do!
+
+  				////////////////////////////////////////////////////
+  				//////// RULE 2 ////////////////////////////////////
+  				////////////////////////////////////////////////////
+  				// if the absolute value of the distance is less than the threshold
+  				if (dist < minSpace) {
+  					vec = vec + ((thisBoid.pos-thatBoid.pos)*(minSpace/(dist**2))); // calculate the difference vector
+  					count = count+1; // keep counting the boids in the vicinity
+  				};
+
+  				////////////////////////////////////////////////////
+  				//////// RULE 3 ////////////////////////////////////
+  				////////////////////////////////////////////////////
+  				// nothing else to do!
+
+          nIdx = nIdx + 1; // increment the index
+  			};
+  		};
+
+  		// for rules 1 and 3
+  		neighbors.sortBy(\dist); // sort neighbors by distance
+  		nearestNeighbors = 6.collect{|j|
+  			[neighbors[j].at(\pos), neighbors[j].at(\vel)];
+  		};
+  		nearestNeighbors = nearestNeighbors.flop; // [positions, velocities]
+
+  		////////////////////////////////////////////////////
+  		//////// RULE 1 ////////////////////////////////////
+  		////////////////////////////////////////////////////
+  		// for the six nearest, get their average positions and velocities
+  		posAvg = nearestNeighbors[0].sum/6; // sum and divide
+  		thisBoid.centerOfMass = centerInstinct * posAvg; // set it for rule 1
+
+  		////////////////////////////////////////////////////
+  		//////// RULE 2 ////////////////////////////////////
+  		////////////////////////////////////////////////////
+  		vec = vec/count; // average the vector
+  		thisBoid.innerDistance = innerDistance * vec; // set the innerDistance vector in each BoidUnit
+
+  		////////////////////////////////////////////////////
+  		//////// RULE 3 ////////////////////////////////////
+  		////////////////////////////////////////////////////
+  		velAvg = nearestNeighbors[1].sum/6;
+  		thisBoid.matchVelocity = matchVelocity * (velAvg * 0.125); // send one eigth of the magnitude
+  	};
+
+  	centerOfMass = posSum/numBoids;
+  	centerOfVel = velSum/numBoids;
+  }
+
   prFillBoidList {|num|
     num.do{
       var boid;
@@ -118,11 +197,12 @@ Boids2D {
   }
 
   moveFlock {|func|
-    this.prGetCenterOfMass; // rule 1
-    this.prGetInnerDistance; // rule 2
-    this.prGetVelocityMatch; // rule 3
+    // this.prGetCenterOfMass; // rule 1
+    // this.prGetInnerDistance; // rule 2
+    // this.prGetVelocityMatch; // rule 3
+    this.prDoRules; // do them all with two loops
 
-    // method to set tell all the boids to now calculate and move?
+    // move AFTER we've calculated what will happen
     boidList.do{|boid|
       boid.moveBoid(targets, obstacles); // tell the boid to calculate and move it's position
     };
@@ -131,9 +211,10 @@ Boids2D {
 
   // calculate the new values but don't send them to the BoidUnits
   calcFlock {|func|
-    this.prGetCenterOfMass; // rule 1
-    this.prGetInnerDistance; // rule 2
-    this.prGetVelocityMatch; // rule 3
+    // this.prGetCenterOfMass; // rule 1
+    // this.prGetInnerDistance; // rule 2
+    // this.prGetVelocityMatch; // rule 3
+    this.prDoRules; // do all rules
     func.(this); // evaluate the function while passing this instance
   }
 
@@ -436,6 +517,11 @@ BoidUnit2D {
         gravity = this.prInverseSquare(distFromTarget, object.at(\strength)*1000).max(0); // 1/r^2
       };
     ^vec + ((diff/diff.norm)*gravity); // return
+  }
+
+  // get the distance between two boids
+  dist {|boid2D|
+    ^pos.dist(boid2D.pos);
   }
 
   /////////////////////////////////
