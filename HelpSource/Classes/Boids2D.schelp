@@ -1,6 +1,6 @@
 TITLE:: Boids2D
 summary:: A 2D-optimized flocking algorithm
-categories:: Undocumented classes
+categories:: Collective Motion
 related:: Classes/BoidUnit2D, Classes/Boids3D, Classes/BoidUnit3D, Guides/Boids2D_spatializerGuide
 
 DESCRIPTION::
@@ -333,7 +333,7 @@ EXAMPLES::
 
 code::
 f = Boids2D.new(20, 0.2); // a new flock
-f.maxVelocity = 50; // speed it up
+f.maxVelocity = 150; // speed it up
 x = {|flock|
   flock.boids[0].pos.postln; // print the position of the first boid
 };

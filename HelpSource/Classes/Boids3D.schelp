@@ -1,6 +1,6 @@
 TITLE:: Boids3D
 summary:: A 3D-optimized flocking algorithm
-categories:: Undocumented classes
+categories:: Collective Motion
 related:: Classes/BoidUnit3D, Classes/Boids2D, Classes/BoidUnit2D
 
 DESCRIPTION::
@@ -334,8 +334,8 @@ RETURNS:: A Boids3D
 EXAMPLES::
 
 code::
-f = Boids3D.new(20, 0.1); // a new flock
-f.maxVelocity = 50; // speed it up
+f = Boids3D.new(20, 0.2); // a new flock
+f.maxVelocity = 150; // speed it up
 x = {|flock|
   flock.boids[0].pos.postln; // print the position of the first boid
 };
@@ -343,14 +343,14 @@ x = {|flock|
 r = fork {
   loop {
     f.moveFlock(x); // move the flock and evaluate x each time
-    0.1.wait; // wait a bit (timestep)
+    0.2.wait; // wait a bit (timestep)
   };
 };
 
-f.visualizer; // a visualizer without the labels or returning the window
+f.visualizer(false); // a visualizer without the labels
 
 f.addTarget([0,0,0], 1); // add a target at the origin with a gravity of 1
-f.addObstacle([100,-100, 150], 2); // add an obstacle at (100,-100, 150) with a repulsion of 2
+f.addObstacle([100,-100,150], 2); // add an obstacle at (100,-100) with a repulsion of 2
 f.innerDistance = 5; // make them like each other less
 f.matchVelocity = 0; // no velocity matching
 
