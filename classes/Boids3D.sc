@@ -36,102 +36,50 @@ Boids3D {
     wrap = false; // default to no wrapping
   }
 
-  // rule 1
-  prGetCenterOfMass {
-    var sum = RealVector3D.zero; // a zero vector to add to
-    boidList.do{|boid, i|
-      sum = sum + boid.pos; // sum the values
-    };
-    centerOfMass = sum/boidList.size; // get the average and set it
-
-    // now set the average within each BoidUnit and compensate for its percieved center by subtracting itself
-    boidList.do{|boid, i|
-      boid.centerOfMass = centerInstinct * ((sum - boid.pos)/(boidList.size - 1)); // set it
-    };
-  }
-
-  // rule 2
-  prGetInnerDistance {
-    boidList.do{|boid|
-      var vec, dist, count;
-      vec = RealVector3D.zero; // a new zero vector
-      count = 1; // count the number of boids nearby to scale
-      boidList.do{|thisBoid|
-        // don't check for boids that are the exact same object
-        if ((boid === thisBoid).not) {
-          dist = boid.pos.dist(thisBoid.pos); // get the distance between these boids
-          // if the absolute value of the distance is less than the threshold
-          if (abs(dist) < minSpace) {
-            ///// original ///////
-            // vec = vec - ((boid.pos-thisBoid.pos)/abs(dist)); // calculate the difference vector
-            vec = vec + ((boid.pos-thisBoid.pos)*(minSpace/(dist**2))); // calculate the difference vector
-            /////////////////////
-            count = count+1; // keep counting the boids in the vicinity
-          };
-        };
-      };
-      vec = vec/count; // average
-      boid.innerDistance = innerDistance * vec; // set the innerDistance vector in each BoidUnit
-    };
-  }
-
-  // rule 3
-  prGetVelocityMatch {
-    var sum = RealVector3D.zero; // a new zero vector
-    // sum the velocities
-    boidList.do{|boid|
-      sum = sum + boid.vel;
-    };
-    boidList.do{|boid|
-      var thisSum = sum - boid.vel; // remove this boid from the sum
-      boid.matchVelocity = matchVelocity * ((thisSum/(boidList.size-1)) * 0.125); // send one eigth of the magnitude to the boid
-    };
-  }
-
   // optimized version of the rules
   prDoRules {
-  	var posSum = RealVector3D.zero, velSum = RealVector3D.zero;
+    var posSum = RealVector3D.zero, velSum = RealVector3D.zero;
 
-  	// for each boidUnit...
-  	boidList.do{|thisBoid, i|
-  		var neighbors, vec, count, nearestNeighbors, velAvg, posAvg, nIdx;
-  		neighbors = Array.newClear(numBoids-1);
+    // for each boidUnit...
+    boidList.do{|thisBoid, i|
+      var neighbors, vec, count, nearestNeighbors, velAvg, posAvg, nIdx;
+      neighbors = Array.newClear(numBoids-1);
       nIdx = 0; // index for neighbors
-  		vec = RealVector3D.zero; // for rule 2
-  		count = 1; // for rule 2
+      vec = RealVector3D.zero; // for rule 2
+      count = 1; // for rule 2
 
-  		// get some averages
-  		posSum = posSum + thisBoid.pos; // sum the position
-  		velSum = velSum + thisBoid.vel; // sum the velocities
+      // get some averages
+      posSum = posSum + thisBoid.pos; // sum the position
+      velSum = velSum + thisBoid.vel; // sum the velocities
 
-  		// loop again
-  		boidList.do{|thatBoid, j|
+      // loop again
+      boidList.do{|thatBoid, j|
         var dist;
-  			// don't check for boids that are the exact same object
-  			if ((thisBoid === thatBoid).not) {
-  				// get the distances to the other boids
-  				dist = thisBoid.dist(thatBoid); // get their distance
-  				neighbors[nIdx] = Dictionary[\pos->thatBoid.pos, \vel->thatBoid.vel, \dist->dist]; // store in a dictionary
+        // don't check for boids that are the exact same object
+        if ((thisBoid === thatBoid).not) {
+          // get the distances to the other boids
+          dist = thisBoid.dist(thatBoid); // get their distance
+          neighbors[nIdx] = Dictionary[\pos->thatBoid.pos, \vel->thatBoid.vel, \dist->dist]; // store in a dictionary
 
-  				//////// RULE 1 ////////////////////////////////////
-  				// nothing else to do!
+          //////// RULE 1 ////////////////////////////////////
+          // nothing else to do!
 
-  				//////// RULE 2 ////////////////////////////////////
-  				// if the absolute value of the distance is less than the threshold
-  				if (dist < minSpace) {
-  					vec = vec + ((thisBoid.pos-thatBoid.pos)*(minSpace/(dist**2))); // calculate the difference vector
-  					count = count+1; // keep counting the boids in the vicinity
-  				};
+          //////// RULE 2 ////////////////////////////////////
+          // if the absolute value of the distance is less than the threshold
+          if (dist < minSpace) {
+            vec = vec + ((thisBoid.pos-thatBoid.pos)*(minSpace/(dist**2))); // calculate the difference vector
+            count = count+1; // keep counting the boids in the vicinity
+          };
 
-  				//////// RULE 3 ////////////////////////////////////
-  				// nothing else to do!
+          //////// RULE 3 ////////////////////////////////////
+          // nothing else to do!
 
           nIdx = nIdx + 1; // increment the index
-  			};
-  		};
+        };
+      };
 
       // for rules 1 and 3
-  		neighbors.sortBy(\dist); // sort neighbors by distance
+      neighbors.sortBy(\dist); // sort neighbors by distance
       nearestNeighbors = 6.collect{|j|
         // get the 6 nearest neighbors, regardless of distance
         [neighbors[j].at(\pos), neighbors[j].at(\vel)];
@@ -139,21 +87,21 @@ Boids3D {
       nearestNeighbors = nearestNeighbors.flop; // [positions, velocities]
 
       //////// RULE 1 ////////////////////////////////////
-  		// for the six nearest, get their average positions and velocities
+      // for the six nearest, get their average positions and velocities
       posAvg = nearestNeighbors[0].sum/6; // sum and divide
       thisBoid.centerOfMass = thisBoid.instincts.at(\centerInstinct) * posAvg * 0.01; // set it for rule 1
 
-  		//////// RULE 2 ////////////////////////////////////
-  		vec = vec/count; // average the vector
-  		thisBoid.innerDistance = thisBoid.instincts.at(\innerDistance) * vec; // set the innerDistance vector in each BoidUnit
+      //////// RULE 2 ////////////////////////////////////
+      vec = vec/count; // average the vector
+      thisBoid.innerDistance = thisBoid.instincts.at(\innerDistance) * vec; // set the innerDistance vector in each BoidUnit
 
-  		//////// RULE 3 ////////////////////////////////////
+      //////// RULE 3 ////////////////////////////////////
       velAvg = nearestNeighbors[1].sum/6;
       thisBoid.matchVelocity = thisBoid.instincts.at(\matchVelocity) * velAvg; // send one eigth of the magnitude
-  	};
+    };
 
-  	centerOfMass = posSum/numBoids;
-  	centerOfVel = velSum/numBoids;
+    centerOfMass = posSum/numBoids;
+    centerOfVel = velSum/numBoids;
   }
 
   prFillBoidList {|num|
