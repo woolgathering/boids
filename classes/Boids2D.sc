@@ -17,7 +17,7 @@
 Boids2D {
   var <numBoids, <>timestep, <>centerInstinct, <>innerDistance, <>matchVelocity, <centerOfMass, <centerOfVel;
   var >boidList, <maxVelocity, workingMaxVelocity, <minSpace, targets, obstacles;
-  var <bounds;
+  var <bounds, <wrap;
 
   *new {|numBoids = 10, timestep = 0.5, centerInstinct = 1, innerDistance = 1, matchVelocity = 1|
     ^super.newCopyArgs(numBoids, timestep, centerInstinct, innerDistance, matchVelocity).init;
@@ -33,6 +33,7 @@ Boids2D {
     this.prFillBoidList(numBoids); // fill the list with boids
     targets = List.new(0);
     obstacles = List.new(0);
+    wrap = false; // default to no wrapping
   }
 
   // rule 1
@@ -330,6 +331,11 @@ Boids2D {
     this.prGetInnerDistance;
   }
 
+  wrap_ {|boolean|
+    wrap = boolean;
+    boidList.do(_.wrap_(boolean));
+  }
+
   // visualizer
   visualizer {|showLabels = false, returnWindow = false|
     var window, loop, availableBounds, size, getNormalizedPos, makeCircle, makeLabel;
@@ -433,6 +439,7 @@ Boids2D {
 BoidUnit2D {
   var <>vel, <>pos, <bounds, <centerOfMass, <maxVelocity;
   var <>centerInstinct, <>innerDistance, <>matchVelocity;
+  var <>centerInstinct, <>innerDistance, <>matchVelocity, <>wrap, <>instincts;
 
   *new {|vel, pos, bounds, centerOfMass, maxVelocity = 5|
     ^super.newCopyArgs(vel, pos, bounds, centerOfMass, maxVelocity).init;
@@ -455,9 +462,10 @@ BoidUnit2D {
 
     centerInstinct = centerOfMass/100; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
+    wrap = wrap ? false; // default to no wrapping
   }
 
-  bound {
+  prBound {
     var vec = RealVector2D.zero; // a zero vector
     2.do{|i|
       var amount;
@@ -474,11 +482,24 @@ BoidUnit2D {
     vel = vel + vec; // add the vectors in velocity-space
   }
 
+  // wrap coordinates
+  prWrap {
+    2.do{|i|
+      if(pos[i] < bounds[i][0]) {
+        pos[i] = bounds[i].abs.sum + pos[i];
+      } {
+        if(pos[i] > bounds[i][1]) {
+          pos[i] = pos[i] - bounds[i].abs.sum;
+        };
+      };
+    };
+  }
+
   moveBoid {|targets, obstacles|
     if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
     if (obstacles.isEmpty.not) {vel = vel + this.calcObstacles(obstacles)}; // if there are obstacles, calculate the vector
     vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
-    this.bound; // bound the coordinates
+    if(wrap) {this.prWrap} {this.prBound}; // wrap or bound
     vel = vel.limit(maxVelocity); // speed limit
     pos = pos + vel; // get the new position
   }
