@@ -367,9 +367,7 @@ Boids2D {
         Pen.color = color;
         normalizedPos = getNormalizedPos.(target.at(\pos)); // normalize the position for the window
         makeCircle.(normalizedPos);
-        if(showLabels) {
-          makeLabel.(i, normalizedPos, color); // make a label
-        };
+        if(showLabels) {makeLabel.(i, normalizedPos, color)}; // make a label
         Pen.perform(\fill);
       };
 
@@ -380,9 +378,7 @@ Boids2D {
         Pen.color = color;
         normalizedPos = getNormalizedPos.(obstacle.at(\pos)); // normalize the position for the window
         makeCircle.(normalizedPos);
-        if(showLabels) {
-          makeLabel.(i, normalizedPos, color); // make a label
-        };
+        if(showLabels) {makeLabel.(i, normalizedPos, color)}; // make a label
         Pen.perform(\fill);
       };
     };
@@ -421,7 +417,6 @@ Boids2D {
 ////////////////////////////////////////////////////////////
 BoidUnit2D {
   var <>vel, <>pos, <bounds, <centerOfMass, <maxVelocity;
-  var <>centerInstinct, <>innerDistance, <>matchVelocity;
   var <>centerInstinct, <>innerDistance, <>matchVelocity, <>wrap, <>instincts;
 
   *new {|vel, pos, bounds, centerOfMass, maxVelocity = 5|
