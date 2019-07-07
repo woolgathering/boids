@@ -15,7 +15,7 @@
 
 
 Boids2D {
-  var <numBoids, <>timestep, <>centerInstinct, <>innerDistance, <>matchVelocity, <centerOfMass, <centerOfVel;
+  var <numBoids, <>timestep, <centerInstinct, <innerDistance, <matchVelocity, <centerOfMass, <centerOfVel;
   var >boidList, <maxVelocity, workingMaxVelocity, <minSpace, targets, obstacles;
   var <bounds, <wrap;
 
@@ -159,7 +159,7 @@ Boids2D {
   prFillBoidList {|num|
     num.do{
       var boid;
-      boid = BoidUnit2D.rand(bounds, centerInstinct, innerDistance, matchVelocity, workingMaxVelocity);
+      boid = BoidUnit2D.rand(bounds, centerInstinct, innerDistance, matchVelocity, gauss(workingMaxVelocity, workingMaxVelocity*0.1));
       boidList.add(boid); // add it to the list
     };
   }
@@ -168,7 +168,7 @@ Boids2D {
     var boid, initVel;
     initPos = initPos ? centerOfMass; // place it near the center of the flock
     initVel = RealVector2D.newFrom(Array.fill(2, {rrand(0.0,3.0)})); // random velocity
-    boid = BoidUnit2D.new(initVel, initPos, bounds, centerOfMass, workingMaxVelocity);
+    boid = BoidUnit2D.new(initVel, initPos, bounds, centerOfMass, gauss(workingMaxVelocity, workingMaxVelocity*0.1));
     boidList.add(boid); // add it
     numBoids = numBoids + 1; // increment numBoids
   }
@@ -305,7 +305,7 @@ Boids2D {
     maxVelocity = val; // maxVelocity is the maximum length of the velocity vector
     workingMaxVelocity = maxVelocity * timestep;
     boidList.do{|boid|
-      boid.maxVelocity = workingMaxVelocity; // set it in each individual boid
+      boid.maxVelocity = gauss(workingMaxVelocity, workingMaxVelocity*0.1); // set it in each individual boid
     };
   }
 
@@ -317,6 +317,27 @@ Boids2D {
   wrap_ {|boolean|
     wrap = boolean;
     boidList.do(_.wrap_(boolean));
+  }
+
+  centerInstinct_ {|val|
+    centerInstinct = val; // set it here (the average)
+    boidList.do{|boid|
+      boid.instincts.add(\centerInstinct->gauss(val, val*0.1));
+    };
+  }
+
+  innerDistance_ {|val|
+    innerDistance = val; // set it here (the average)
+    boidList.do{|boid|
+      boid.instincts.add(\innerDistance->gauss(val, val*0.1));
+    };
+  }
+
+  matchVelocity_ {|val|
+    matchVelocity = val; // set it here (the average)
+    boidList.do{|boid|
+      boid.instincts.add(\matchVelocity->gauss(val, val*0.1));
+    };
   }
 
   // visualizer
@@ -430,14 +451,15 @@ BoidUnit2D {
   init {|...args|
     bounds = bounds ? args[0] ? [[-500,500],[-500,500]]; // [ [xmin, xmax], [ymin, ymax]]
     vel = vel ? RealVector2D.newFrom(Array.fill(2, {rrand(0.0,3.0)}));
-    pos = pos ? RealVector.rand2D(bounds[0][0],bounds[0][1],bounds[1][0],bounds[1][1]).asRealVector2D;
+    pos = pos ? RealVector.rand(2,-1*bounds[0][0], bounds[0][0]).asRealVector2D;
     maxVelocity = maxVelocity ? args[4] ? 5; // max velocity
 
     // if these are not set, set them
-    centerOfMass = args[1] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
-    innerDistance = args[2] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
-    matchVelocity = args[3] ? RealVector.rand2D(-10,10,-10,10).asRealVector2D;
+    centerOfMass = args[2] ? RealVector.rand(2,-10,10).asRealVector2D;
+    innerDistance = args[3] ? RealVector.rand(2,-10,10).asRealVector2D;
+    matchVelocity = args[4] ? RealVector.rand(2,-10,10).asRealVector2D;
 
+    instincts = Dictionary[\centerInstinct->gauss(1, 0.1), \innerDistance->gauss(1, 0.1), \matchVelocity->gauss(1, 0.1)]; // individualized weights
     centerInstinct = centerOfMass/100; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
     wrap = wrap ? false; // default to no wrapping
