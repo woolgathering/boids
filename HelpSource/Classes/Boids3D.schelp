@@ -1,0 +1,368 @@
+TITLE:: Boids3D
+summary:: A 3D-optimized flocking algorithm
+categories:: Undocumented classes
+related:: Classes/BoidUnit3D, Classes/Boids2D, Classes/BoidUnit2D
+
+DESCRIPTION::
+Boids3D is an implementation of the Reynolds boids algorithm, optimized for three dimensions. Flock-properties, such as maximum velocity or the weights for the three rules, are Gaussian-distributed such that the mean is the value provided and the standard deviation is that 5% of the mean.
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new flock.
+
+ARGUMENT:: numBoids
+Number of members of the flock.
+
+ARGUMENT:: timestep
+The timestep of each calculation, used internally to calculate a working maximum velocity. When running moveFlock() in a loop, this is the interval of waiting to get movement at speed. If this is set lower than the wait interval in a loop, the flock appears to move in slow motion and visa versa.
+
+ARGUMENT:: centerInstinct
+The weight of the center instinct rule. The center instinct is the amount of weight each boid gives to moving toward the center of mass of the entire flock. Making this negative makes the boids move away from the center of mass. Often works best at 0 for a bounded system.
+
+ARGUMENT:: innerDistance
+The weight of the inner distance rule. The inner distance rule moves each boid away from one another such that they maintain some distance from one another. Making this negative attracts the boids to each other.
+
+ARGUMENT:: matchVelocity
+The weight of the velocity matching rule. The velocity matching rule applies to thee velocity vector, both magnitude (speed) and angle (direction).
+
+RETURNS:: A Boids3D.
+
+NOTE::
+centerInstinct, innerDistance, and matchVelocity are the EMPHASIS::mean:: of the flock with all members being Gaussian-distributed. The standard deviation is 5% of the mean.
+::
+
+CODE::
+f = Boids3D(20, 0.2, 1, 1, 1); // a new flock of 20 members, a timestep of 0.2, and each rule having a mean of 1.
+::
+
+INSTANCEMETHODS::
+
+METHOD:: addBoid
+Add a new member to the flock.
+
+ARGUMENT:: initPos
+The initial position. If nil, the boid is added at the center of mass of all the agents.
+
+RETURNS:: A Boids3D
+
+METHOD:: removeBoid
+Remove an agent from the flock
+
+ARGUMENT:: index
+The index of the agent to remove. If nil, the last agent in the list is removed.
+
+METHOD:: boids
+The list of BoidUnits (agents) in the flock.
+
+RETURNS:: An Array of BoidUnit3D's.
+
+METHOD:: bounds
+The bounds of the space in which the flock moves in meters.
+
+ARGUMENT:: dim
+The new dimensions in a two element array. [1000, 1000] is a square with 1000 meters on each side such that the range and domain are both +/-500. When using the getter, bounds() would return [[-500,500], [-500,500]]
+
+RETURNS:: An Array (getter) or a Boids3D (setter)
+
+METHOD:: wrap
+Boolean on whether or not to wrap the agents in the space. Defaults to false.
+
+ARGUMENT:: boolean
+
+RETURNS:: A Boolean (getter) or a Boids3D (setter)
+
+METHOD:: timestep
+The timestep used in calculating positions relative the maximum velocity.
+
+ARGUMENT:: time
+A Float describing the interval of time with which to calculate the movement of the flock. This can be different than the interval at which moveFlock() is looped such that momentum is preserved when moving in "slow motion".
+
+RETURNS:: A Float (getter) or a Boids3D (setter)
+
+
+
+
+
+
+SUBSECTION::Flocking Rules and Moving the Flock
+
+METHOD:: centerInstinct
+The weight of the center-seeking rule, Gaussian-distributed.
+
+RETURNS:: A Boids3D
+
+DISCUSSION:: The center instinct is the amount of weight each agent gives to moving toward the center of mass of the six nearest members, regardless of their absolute distance. Making this negative causes the agents move away from the center of mass of their neighbors. Often works best close to 0 for a bounded system. When this is set high in an unbounded (wrapped) system, the agents have a tendency to oscillate at the extremes of the space.
+
+METHOD:: innerDistance
+The weight of the inner distance rule, Gaussian-distributed.
+
+RETURNS:: A Boids3D
+
+DISCUSSION::The inner distance rule moves each agent away from one another such that they maintain some distance from one another. Making this negative attracts the agents to each other.
+
+METHOD:: matchVelocity
+The weight of the velocity-matching rule, Gaussian-distributed. The velocity is matched in both speed and direction.
+
+RETURNS:: A Boids3D
+
+DISCUSSION::The inner distance rule moves each agent away from one another such that they maintain some distance from one another. Making this negative attracts the agents to each other.
+
+METHOD:: maxVelocity
+The maximum velocity of the agents in meters per second; defaults to 100 m/s. This is adjusted internally to a working maximum velocity and is Gaussian-distributed.
+
+ARGUMENT:: val
+Speed in meters per second.
+
+RETURNS:: A Boids3D
+
+METHOD:: minSpace
+The minimum space between agents in meters, Gaussian-distributed.
+
+ARGUMENT:: val
+The minimum space between agents in meters.
+
+RETURNS:: A Boids3D
+
+DISCUSSION::Neighboring agents within this distance from one another will move away from each other; agents outside of this radius have no effect. Note that this amount can be overcome by other forces, for instance if a very strong attractor is present.
+
+METHOD:: moveFlock
+The method that, when called, calculates the new velocity vectors and adds them to the positions. The func argument is evaluated EMPHASIS::after:: all other operations and the boids have been moved.
+
+ARGUMENT:: func
+A Function that is called after evaluation of the new positions. It is passed this instance of Boids3D.
+
+RETURNS:: A Boids3D
+
+CODE::
+// move the flock and post its new center of mass
+f.moveFlock({|flock|
+  flock.centerOfMass.postln;
+});
+::
+
+
+
+
+
+
+
+SUBSECTION:: Targets and Obstacles
+
+NOTE:: There may be changes the argument names for obstacles and targets, specifically code::gravity:: and code::repulsion::, to code::strength:: so that they are consistent.::
+
+METHOD:: targets
+An array of the targets. Each target is a Dictionary of two elements: \pos and \strength.
+
+RETURNS:: An Array of Dictionaries
+
+METHOD:: addTarget
+Add a target. Each target is a Dictionary containing two elements: \pos (A RealVector3D of the x, y, and z positions) and \strength (a Float of the strength of the target).
+
+ARGUMENT:: pos
+An Array that describes the position of the target in (x,y, z). This is converted internally to a RealVector3D.
+
+ARGUMENT:: gravity
+A Float describing the strength of the target.
+
+RETURNS:: A Boids3D
+
+NOTE::
+Internally, the position is converted from an Array to a RealVector3D to speed up computation. Likewise, the Dictionary created stores the gravity value as strength for cleaner code in the class. The CODE::pos:: EMPHASIS::must:: be a three-element array.
+
+The EMPHASIS::field:: of the gravity falls off at a rate of 1/EMPHASIS::r:: where EMPHASIS::r:: is the radius in meters.
+::
+
+CODE::
+f.addTarget([rand(200), rand(200), rand(200)], rrand(1,3)); // add a target randomly
+f.targets[0].postln; // prints Dictionary[ (pos -> RealVector3D[ 91, 27, 64 ]), (strength -> 2) ]
+::
+
+METHOD:: editTarget
+Edit a target at an index.
+
+ARGUMENT:: index
+The index of the target one wishes to edit. If this is nil, nothing happens and a warning is thrown.
+
+ARGUMENT:: pos
+The position of the target. If this is nil, the position remains the same.
+
+ARGUMENT:: gravity
+The gravity of the target. If this is nil, the gravity remains the same.
+
+RETURNS:: A Boids3D
+
+METHOD:: removeTarget
+Remove a target
+
+ARGUMENT:: index
+The index of the target in the list of targets to remove. If index is nil, remove the last target in the list.
+
+METHOD:: clearTargets
+Clear the list of targets.
+
+RETURNS:: a Boids3D
+
+
+METHOD:: obstacles
+An array of the obstacles. Each target is a Dictionary of two elements: \pos and \strength.
+
+RETURNS:: An Array of Dictionaries
+
+METHOD:: addObstacle
+Add a target. Each target is a Dictionary containing two elements: \pos (A RealVector3D of the x, y, and z positions) and \strength (a Float of the strength of the target).
+
+ARGUMENT:: pos
+An Array that describes the position of the target in (x,y, z). This is converted internally to a RealVector3D.
+
+ARGUMENT:: repulsion
+A Float describing the repulsion of the obstacle.
+
+RETURNS:: A Boids3D
+
+NOTE::
+Internally, the position is converted from an Array to a RealVector3D to speed up computation. Likewise, the Dictionary created stores the repulsion value as strength for cleaner code in the class. The CODE::pos:: EMPHASIS::must:: be a three-element array.
+
+The EMPHASIS::field:: of repulsion falls off at a rate of 1/EMPHASIS::r^2:: where EMPHASIS::r:: is the radius in meters.
+::
+
+CODE::
+f.addObstacle([rand(200), rand(200), rand(200)], rrand(1,3)); // add a target randomly
+f.targets[0].postln; // prints Dictionary[ (pos -> RealVector3D[ 91, 27, 64 ]), (strength -> 2) ]
+::
+
+METHOD:: editObstacle
+Edit an obstacle at an index.
+
+ARGUMENT:: index
+The index of the obstacle one wishes to edit. If this is nil, nothing happens and a warning is thrown.
+
+ARGUMENT:: pos
+The position of the obstacle. If this is nil, the position remains the same.
+
+ARGUMENT:: repulsion
+The gravity of the obstacle. If this is nil, the gravity remains the same.
+
+RETURNS:: A Boids3D
+
+METHOD:: removeObstacle
+Remove a obstacle.
+
+ARGUMENT:: index
+The index of the obstacle in the list of obstacles to remove. If index is nil, remove the last obstacle in the list.
+
+METHOD:: clearObstacles
+Clear the list of obstacles.
+
+RETURNS:: a Boids3D
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SUBSECTION:: Attributes of the flock
+
+METHOD:: centerOfMass
+The position of the center of mass of the flock.
+
+RETURNS:: A RealVector3D
+
+METHOD:: boids
+The array of BoidUnits; i.e. an array of the agents in the flock.
+
+RETURNS:: An Array
+
+METHOD:: getPanVals
+A convenience method that returns an array of three-element arrays of values useful for use as a panner in the form [dist, azi, angle] where EMPHASIS::dist:: is the distance from the origin in meters, EMPHASIS::angle:: is the angle about the origin in radians, and EMPHASIS::azi:: is the elevation in radians with the horizon at CODE::x=0::.
+
+Also see BoidUnit3D.getPanVals.
+
+RETURNS:: An Array
+
+WARNING:: For math reasons, positive motion is EMPHASIS::counterclockwise:: while negative motion is EMPHASIS::clockwise::.::
+
+METHOD:: sizeOfFlock
+A convenience method to return the size of the flock. Identical to numBoids().
+
+RETURNS:: an Integer
+
+METHOD:: numBoids
+The number of members in the flock. Identical to sizeOfFlock().
+
+RETURNS:: An Integer
+
+METHOD:: visualizer
+Show a visualization of the flock. The agents are shown as wedges with the point being the position and the angle being the angle of the velocity. Targets are shown as blue circles and obstacles as red circles.
+
+ARGUMENT:: showLabels
+A Boolean, defaults to false. If true, the index of the agent/target/obstacle is positioned along with the wedge or circle.
+
+ARGUMENT:: returnWindow
+A Boolean, defaults to false. If true, return the Window instead of the instance.
+
+RETURNS:: A Boids3D or a Window.
+
+METHOD:: info
+Print some basic info about the flock. Will probably be removed in the future.
+
+code::
+// f.info prints
+Boid Info::::
+	numBoids: 20
+	timestep: 0.2 s
+	centerInstinct: 0
+	innerDistance: 1
+	matchVelocity: 1
+	maxVelocity: 5 m/s
+	minSpace: 1 m
+::
+
+RETURNS:: A Boids3D
+
+
+
+
+EXAMPLES::
+
+code::
+f = Boids3D.new(20, 0.1); // a new flock
+f.maxVelocity = 50; // speed it up
+x = {|flock|
+  flock.boids[0].pos.postln; // print the position of the first boid
+};
+
+r = fork {
+  loop {
+    f.moveFlock(x); // move the flock and evaluate x each time
+    0.1.wait; // wait a bit (timestep)
+  };
+};
+
+f.visualizer; // a visualizer without the labels or returning the window
+
+f.addTarget([0,0,0], 1); // add a target at the origin with a gravity of 1
+f.addObstacle([100,-100, 150], 2); // add an obstacle at (100,-100, 150) with a repulsion of 2
+f.innerDistance = 5; // make them like each other less
+f.matchVelocity = 0; // no velocity matching
+
+r.stop; // stop the loop and thus, stop the flock
+
+/*
+  Job 1:21 - And said, Naked came I out of my mother's womb, and naked shall I return thither:
+  the LORD gave, and the LORD hath taken away; blessed be the name of the LORD.
+*/
+f.addBoid; // add a boid
+f.removeBoid; // remove a boid
+::
+
+
+PRIVATE:: prFillBoidList, prCalcVec, prArcTan, prArcTan2, prInverseSquare, prDoRules, boidList
