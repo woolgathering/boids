@@ -15,7 +15,7 @@
 
 
 Boids3D {
-  var <numBoids, <>timestep, <>centerInstinct, <>innerDistance, <>matchVelocity, <centerOfMass, <centerOfVel;
+  var <numBoids, <>timestep, <centerInstinct, <innerDistance, <matchVelocity, <centerOfMass, <centerOfVel;
   var >boidList, <maxVelocity, workingMaxVelocity, <minSpace, targets, obstacles;
   var <bounds, <wrap;
 
@@ -66,8 +66,8 @@ Boids3D {
 
           //////// RULE 2 ////////////////////////////////////
           // if the absolute value of the distance is less than the threshold
-          if (dist < minSpace) {
-            vec = vec + ((thisBoid.pos-thatBoid.pos)*(minSpace/(dist**2))); // calculate the difference vector
+          if (dist < thisBoid.instincts.at(\minSpace)) {
+            vec = vec + ((thisBoid.pos-thatBoid.pos)*(thisBoid.instincts.at(\minSpace)/(dist**2))); // calculate the difference vector
             count = count+1; // keep counting the boids in the vicinity
           };
 
@@ -115,10 +115,15 @@ Boids3D {
   addBoid {|initPos|
     var boid, initVel;
     initPos = initPos ? centerOfMass; // place it near the center of the flock
-    initVel = RealVector3D.newFrom(Array.fill(3, {rrand(0.0,3.0)})); // random velocity
+    initVel = centerOfVel; // the average velocity
     boid = BoidUnit3D.new(initVel, initPos, bounds, centerOfMass, gauss(workingMaxVelocity, workingMaxVelocity*0.1));
     boidList.add(boid); // add it
     numBoids = numBoids + 1; // increment numBoids
+
+    // set the instinct attributes
+    boid.centerInstinct = gauss(centerInstinct, centerInstinct*0.05);
+    boid.innerDistance = gauss(innerDistance, innerDistance*0.05);
+    boid.matchVelocity = gauss(matchVelocity, matchVelocity*0.05);
   }
 
   removeBoid {|index|
@@ -234,9 +239,9 @@ Boids3D {
     };
   }
 
-  editObstacle {|index, obstacle, repulsion|
+  editObstacle {|index, pos, repulsion|
     if(index.isNil) {"Index is nil: no obstacles were edited!".warn}; // throw a warning if insufficent args were supplied
-    if(obstacle.notNil) {obstacles[index].add(\pos->RealVector3D.newFrom(obstacle[..2]))}; // should check here if target is a Vector or not
+    if(pos.notNil) {obstacles[index].add(\pos->RealVector3D.newFrom(pos[..2]))}; // should check here if target is a Vector or not
     if(repulsion.notNil) {obstacles[index].add(\strength->repulsion)}; // edit the repulsion parameter
   }
 
@@ -266,7 +271,7 @@ Boids3D {
 
   minSpace_ {|val|
     minSpace = val;
-    this.prGetInnerDistance;
+    boidList.do(_.instincts.add(\minSpace->gauss(minSpace, minSpace*0.05)));
   }
 
   wrap_ {|boolean|
@@ -420,7 +425,7 @@ BoidUnit3D {
     innerDistance = args[3] ? RealVector.rand(3,-10,10).asRealVector3D;
     matchVelocity = args[4] ? RealVector.rand(3,-10,10).asRealVector3D;
 
-    instincts = Dictionary[\centerInstinct->gauss(1, 0.1), \innerDistance->gauss(1, 0.1), \matchVelocity->gauss(1, 0.1)]; // individualized weights
+    instincts = Dictionary[\centerInstinct->gauss(1, 0.1), \innerDistance->gauss(1, 0.1), \matchVelocity->gauss(1, 0.1), \minSpace->gauss(10,0.5)]; // individualized weights
     centerInstinct = centerOfMass/100; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
     wrap = wrap ? false; // default to no wrapping

@@ -15,7 +15,7 @@
 
 
 Boids2D {
-  var <numBoids, <>timestep, <centerInstinct, <innerDistance, <matchVelocity, <centerOfMass, <centerOfVel;
+  var <numBoids, <timestep, <centerInstinct, <innerDistance, <matchVelocity, <centerOfMass, <centerOfVel;
   var >boidList, <maxVelocity, workingMaxVelocity, <minSpace, targets, obstacles;
   var <bounds, <wrap;
 
@@ -25,9 +25,9 @@ Boids2D {
 
   init {
     boidList = List.new(0); // an empty list of BoidUnits that we fill below
-    maxVelocity = 5; // speed limit in meters per second (need to multiply it by the timestep)
+    maxVelocity = 100; // speed limit in meters per second (need to multiply it by the timestep)
     workingMaxVelocity = maxVelocity * timestep; // set the workingMaxVelocity (accounting for the timestep)
-    minSpace = 1; // minmum distance between boids in a flock in meters
+    minSpace = 10; // minmum distance between boids in a flock in meters
     centerOfMass = RealVector2D.zero; // init center of mass at the origin
     bounds = [[-500,500], [-500,500]]; // set the default bounds
     this.prFillBoidList(numBoids); // fill the list with boids
@@ -66,8 +66,8 @@ Boids2D {
 
           //////// RULE 2 ////////////////////////////////////
           // if the absolute value of the distance is less than the threshold
-          if (dist < minSpace) {
-            vec = vec + ((thisBoid.pos-thatBoid.pos)*(minSpace/(dist**2))); // calculate the difference vector
+          if (dist < thisBoid.instincts.at(\minSpace)) {
+            vec = vec + ((thisBoid.pos-thatBoid.pos)*(thisBoid.instincts.at(\minSpace)/(dist**2))); // calculate the difference vector
             count = count+1; // keep counting the boids in the vicinity
           };
 
@@ -100,8 +100,8 @@ Boids2D {
       thisBoid.matchVelocity = thisBoid.instincts.at(\matchVelocity) * velAvg; // send one eigth of the magnitude
     };
 
-    centerOfMass = posSum/numBoids;
-    centerOfVel = velSum/numBoids;
+    centerOfMass = posSum/numBoids; // get the center of mass
+    centerOfVel = velSum/numBoids; // get the avgerage velocity
   }
 
   prFillBoidList {|num|
@@ -115,10 +115,15 @@ Boids2D {
   addBoid {|initPos|
     var boid, initVel;
     initPos = initPos ? centerOfMass; // place it near the center of the flock
-    initVel = RealVector2D.newFrom(Array.fill(2, {rrand(0.0,3.0)})); // random velocity
+    initVel = centerOfVel; // give it the average velocity of the flock
     boid = BoidUnit2D.new(initVel, initPos, bounds, centerOfMass, gauss(workingMaxVelocity, workingMaxVelocity*0.1));
     boidList.add(boid); // add it
     numBoids = numBoids + 1; // increment numBoids
+
+    // set the instinct attributes
+    boid.centerInstinct = gauss(centerInstinct, centerInstinct*0.05);
+    boid.innerDistance = gauss(innerDistance, innerDistance*0.05);
+    boid.matchVelocity = gauss(matchVelocity, matchVelocity*0.05);
   }
 
   removeBoid {|index|
@@ -227,9 +232,9 @@ Boids2D {
     };
   }
 
-  editObstacle {|index, obstacle, repulsion|
+  editObstacle {|index, pos, repulsion|
     if(index.isNil) {"Index is nil: no obstacles were edited!".warn}; // throw a warning if insufficent args were supplied
-    if(obstacle.notNil) {obstacles[index].add(\pos->RealVector2D.newFrom(obstacle[..1]))}; // should check here if target is a Vector or not
+    if(pos.notNil) {obstacles[index].add(\pos->RealVector2D.newFrom(pos[..1]))}; // should check here if target is a Vector or not
     if(repulsion.notNil) {obstacles[index].add(\strength->repulsion)}; // edit the repulsion parameter
   }
 
@@ -259,7 +264,9 @@ Boids2D {
 
   minSpace_ {|val|
     minSpace = val;
-    this.prGetInnerDistance;
+    boidList.do{|boid|
+      boid.instincts.add(\minSpace->gauss(minSpace, minSpace*0.05));
+    };
   }
 
   wrap_ {|boolean|
@@ -286,6 +293,11 @@ Boids2D {
     boidList.do{|boid|
       boid.instincts.add(\matchVelocity->gauss(val, val*0.1));
     };
+  }
+
+  // to ensure we return this instance if setting
+  timestep_ {|time|
+    timestep = time;
   }
 
   // visualizer
@@ -407,7 +419,7 @@ BoidUnit2D {
     innerDistance = args[3] ? RealVector.rand(2,-10,10).asRealVector2D;
     matchVelocity = args[4] ? RealVector.rand(2,-10,10).asRealVector2D;
 
-    instincts = Dictionary[\centerInstinct->gauss(1, 0.1), \innerDistance->gauss(1, 0.1), \matchVelocity->gauss(1, 0.1)]; // individualized weights
+    instincts = Dictionary[\centerInstinct->gauss(1, 0.1), \innerDistance->gauss(1, 0.1), \matchVelocity->gauss(1, 0.1), \minSpace->gauss(10,0.5)]; // individualized weights
     centerInstinct = centerOfMass/100; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
     wrap = wrap ? false; // default to no wrapping
