@@ -14,7 +14,6 @@ SinglePole {
   }
 
   compute {|input|
-    // output = output + (cutoff*(input-output)); // calculate
     output = (input*a0) + (output*b1);
     ^output; // return the output
   }
