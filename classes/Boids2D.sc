@@ -113,54 +113,43 @@ Boids2D {
   				dist = thisBoid.dist(thatBoid); // get their distance
   				neighbors[nIdx] = Dictionary[\pos->thatBoid.pos, \vel->thatBoid.vel, \dist->dist]; // store in a dictionary
 
-  				////////////////////////////////////////////////////
   				//////// RULE 1 ////////////////////////////////////
-  				////////////////////////////////////////////////////
   				// nothing else to do!
 
-  				////////////////////////////////////////////////////
   				//////// RULE 2 ////////////////////////////////////
-  				////////////////////////////////////////////////////
   				// if the absolute value of the distance is less than the threshold
   				if (dist < minSpace) {
   					vec = vec + ((thisBoid.pos-thatBoid.pos)*(minSpace/(dist**2))); // calculate the difference vector
   					count = count+1; // keep counting the boids in the vicinity
   				};
 
-  				////////////////////////////////////////////////////
   				//////// RULE 3 ////////////////////////////////////
-  				////////////////////////////////////////////////////
   				// nothing else to do!
 
           nIdx = nIdx + 1; // increment the index
   			};
   		};
 
-  		// for rules 1 and 3
+      // for rules 1 and 3
   		neighbors.sortBy(\dist); // sort neighbors by distance
-  		nearestNeighbors = 6.collect{|j|
-  			[neighbors[j].at(\pos), neighbors[j].at(\vel)];
-  		};
-  		nearestNeighbors = nearestNeighbors.flop; // [positions, velocities]
+      nearestNeighbors = 6.collect{|j|
+        // get the 6 nearest neighbors, regardless of distance
+        [neighbors[j].at(\pos), neighbors[j].at(\vel)];
+      };
+      nearestNeighbors = nearestNeighbors.flop; // [positions, velocities]
 
-  		////////////////////////////////////////////////////
-  		//////// RULE 1 ////////////////////////////////////
-  		////////////////////////////////////////////////////
+      //////// RULE 1 ////////////////////////////////////
   		// for the six nearest, get their average positions and velocities
-  		posAvg = nearestNeighbors[0].sum/6; // sum and divide
-  		thisBoid.centerOfMass = centerInstinct * posAvg; // set it for rule 1
+      posAvg = nearestNeighbors[0].sum/6; // sum and divide
+      thisBoid.centerOfMass = thisBoid.instincts.at(\centerInstinct) * posAvg * 0.01; // set it for rule 1
 
-  		////////////////////////////////////////////////////
   		//////// RULE 2 ////////////////////////////////////
-  		////////////////////////////////////////////////////
   		vec = vec/count; // average the vector
-  		thisBoid.innerDistance = innerDistance * vec; // set the innerDistance vector in each BoidUnit
+  		thisBoid.innerDistance = thisBoid.instincts.at(\innerDistance) * vec; // set the innerDistance vector in each BoidUnit
 
-  		////////////////////////////////////////////////////
   		//////// RULE 3 ////////////////////////////////////
-  		////////////////////////////////////////////////////
-  		velAvg = nearestNeighbors[1].sum/6;
-  		thisBoid.matchVelocity = matchVelocity * (velAvg * 0.125); // send one eigth of the magnitude
+      velAvg = nearestNeighbors[1].sum/6;
+      thisBoid.matchVelocity = thisBoid.instincts.at(\matchVelocity) * velAvg; // send one eigth of the magnitude
   	};
 
   	centerOfMass = posSum/numBoids;
@@ -198,9 +187,6 @@ Boids2D {
   }
 
   moveFlock {|func|
-    // this.prGetCenterOfMass; // rule 1
-    // this.prGetInnerDistance; // rule 2
-    // this.prGetVelocityMatch; // rule 3
     this.prDoRules; // do them all with two loops
 
     // move AFTER we've calculated what will happen
@@ -212,9 +198,6 @@ Boids2D {
 
   // calculate the new values but don't send them to the BoidUnits
   calcFlock {|func|
-    // this.prGetCenterOfMass; // rule 1
-    // this.prGetInnerDistance; // rule 2
-    // this.prGetVelocityMatch; // rule 3
     this.prDoRules; // do all rules
     func.(this); // evaluate the function while passing this instance
   }
