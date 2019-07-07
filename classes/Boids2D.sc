@@ -54,7 +54,7 @@ Boids2D {
   prGetInnerDistance {
     boidList.do{|boid|
       var vec, dist, count;
-      vec = RealVector2D.newFrom([0,0]); // a new zero vector
+      vec = RealVector2D.zero; // a new zero vector
       count = 1; // count the number of boids nearby to scale
       boidList.do{|thisBoid|
         // don't check for boids that are the exact same object
@@ -241,7 +241,7 @@ Boids2D {
   }
 
   clearTargets {
-    targets = targets.clear; // clear the list
+    targets.clear; // clear the list
   }
 
   removeTarget {|index|
@@ -268,7 +268,7 @@ Boids2D {
   }
 
   clearObstacles {
-    obstacles = List[]; // clear the list
+    obstacles.clear; // clear the list
   }
 
   removeObstacle {|index|
