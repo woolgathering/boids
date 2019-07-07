@@ -1,0 +1,124 @@
+TITLE:: Guide To Using Boids2D as a Spatializer
+summary:: Tips and tricks to use Boids2D as a sound spatializer.
+related:: Classes/BoidUnit3D, Classes/Boids2D, Classes/BoidUnit2D
+
+SECTION:: Using Boids2D to spatialize sound.
+
+One thing you'll notice that the Boids classes are EMPHASIS::generalized:: such that they do not include dedicated mechanisms for spatialzing sound (except for the getPanVals() method). So you must roll your own.
+
+CODE::
+b = Boids2D(20, 0.1); // 20 "birds" (boids), a timestep of 0.1 seconds. The timestep is used to calculate movement
+b.bounds = [1000, 1000]; // the bounds in meters [x, y]. 1000 works well (yes, 1km! I have to fix that...)
+b.maxVelocity = 150; // max velocity in meters per second
+b.minSpace = 20; // the minimum amount of space the Boids want between each other in meters
+
+// we can also add targets and obstacles. Adding a target at the origin works pretty well and makes sure they boids don't stray too far.
+b.addTarget([0,0], 1); // args: Cartesian coordinates, gravity
+b.targets; // list the targets
+// edit the target
+b.editTarget(0, target: [10,10], gravity: 1.5); // the index of the target you want to edit in .targets, the new coordinates (optional), and the new strength (optional).
+
+
+// then the three rules
+b.centerInstinct = 1; // the weight of the center seeking rule
+b.innerDistance = 1; // the weight of the inner distance rule
+b.matchVelocity = 1; // the weight of the match velocity rule
+
+// the above tend to work well when you have their center instinct negative (they don't want the center of the flock) or a high inner distance (want to keep distance) but also have a strong target. So that they're attracted to the target but want to stay away from each other. That tends to make things interesting.
+
+r = Routine({
+  loop {
+    b.moveFlock({|thisFlock|
+      var boids, thisBoid, panVals;
+      // moveFlock takes a function which is passed the instance of Boids2D
+      // you can access the BoidUnits (the "birds") by getting them with the .boids method
+      boids = thisFlock.boids; // the array of the "birds", in this case, 20 of them
+      thisBoid = boids[0]; // look at just the first one in the list. Order of the list has virtually no meaning.
+      panVals = thisBoid.getPanVals; // get the values that are useful for panning: angle (in radians) and magnitude (distance from origin in meters).
+			panVals.postln; // print out the values
+			// thisBoid.vel.norm.postln; // you can also get the velocity in m/s by taking the norm of the velocity vector (Doppler, if it's important)
+
+      // note that the class works from the unit circle so that 0 radians is directly to the right and positive motion is counterclockwise
+			// to use them in a panner, you'd just send them to a Synth with the proper values
+			// synth.set(\angle, panVals[0], \dist, panVals[1]); // send them to a synth. Do math here or there.
+
+			// further note that boids that are very close to the center will pan erratically; when I do it I use PanAz and scale the width so that if the boid is
+			// close to the center, it starts sending to more and more speakers so it would sound like it's moving through the space instead of jumping across.
+			// like this:
+			// 	 width = dist.linlin(10,100,num,width); // scale width with distance where num is the number of speakers one is using and width is the max width that is set elsewhere
+    });
+		0.1.wait; // wait a time equal to the timestep
+  };
+}).play;
+
+b.visualizer; // let's see it. Black wedges are the boids, red circles are the targets.
+
+r.stop; // stop the loop (you can also resume by just calling again)
+b.free; // free the flock (clears up stuff, stops any routines)
+::
+
+SECTION:: Other Cool Stuff
+
+Since one passes a function to the moveFlock() method, one can do all sorts of things there. Here, we have three targets and several random obstacles. The function in moveFlock() moves the targets and adjusts their gravity such that when no agents are close by (attacking, one can imagine), their gravity grows. When agents are nearby, the strength begins to drop. This oscillation of gravity along with obstacles in the field makes for really interesting movement.
+
+CODE::
+var flock, targets, func;
+
+flock = Boids2D(30, 0.1); // a new flock
+targets = (); // an Event to make life easy
+
+// set some stuff
+flock.centerInstinct = 0;
+flock.innerDistance = 2;
+flock.matchVelocity = 0.5;
+flock.minSpace = 20;
+flock.maxVelocity = 100;
+
+// add some random obstacles
+5.do{
+	flock.addObstacle(Array.fill(2, {rrand(-350,350)}), rrand(2.0, 5.0));
+};
+
+// get some targets
+targets.startingSize = flock.targets.size; // remember how big our list is now
+3.do{flock.addTarget([0,0], 1)}; // make some new targets
+targets.targets = flock.targets[targets.startingSize..]; // get only our new targets
+targets.targets = 3.collect{|i|
+	var index = i+targets.startingSize;
+	[flock.targets[index], index]; // save the target and the index (pain in the ass...) This way we only edit these targets in case there are others
+};
+targets.mags = Array.fill(3, {Pbrown(50, 300, 5, inf).asStream}); // get some streams for magnitudes
+targets.angles = Array.fill(3, {rand(2pi)}); // get some angles
+targets.points = 3.collect{|i| Polar(targets.angles[i], targets.mags[i].next).asPoint}; // points as polar coordinates is easier
+
+func = {|flock|
+	targets.targets.do{|array, i|
+		var target = array[0], index = array[1];
+		flock.boids.do{|boid|
+			var dist;
+			dist = boid.pos.dist(target.at(\pos)); // get the distance
+			if(dist < 20) {
+				flock.editTarget(index, gravity: target.at(\strength)-0.07);
+			};
+		};
+		targets.points[i] = Polar(targets.mags[i].next, targets.angles[i]).asPoint; // get a new Point
+		flock.editTarget(index, [targets.points[i].x, targets.points[i].y], gravity: target.at(\strength)+rand(0.08)); // edit it
+		if(i%2==0) {
+			targets.angles[i] = targets.angles[i]+(rand(pi/180)); // edit it again
+		} {
+			targets.angles[i] = targets.angles[i]-(rand(pi/180)); // edit once more
+		};
+	};
+};
+
+r = fork {
+  loop {
+    flock.moveFlock(func); // move the flock
+    flock.timestep.wait; // wait the timestep
+  };
+};
+
+flock.visualizer; // look at it
+// flock.timestep = 0.5; // slow motion!
+
+::
