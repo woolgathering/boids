@@ -101,6 +101,7 @@ Boids2D {
     initVel = RealVector2D.newFrom(Array.fill(2, {rrand(0.0,3.0)})); // random velocity
     boid = BoidUnit2D.new(initVel, initPos, bounds, centerOfMass, workingMaxVelocity);
     boidList.add(boid); // add it
+    numBoids = numBoids + 1; // increment numBoids
   }
 
   removeBoid {|index|
@@ -109,6 +110,7 @@ Boids2D {
     } {
       boidList.removeAt(index); // else, remove at the index
     };
+    numBoids = numBoids - 1; // decrement numBoids
   }
 
   sizeOfFlock {
