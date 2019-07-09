@@ -1,5 +1,6 @@
 TITLE:: Guide To Using Boids2D as a Spatializer
 summary:: Tips and tricks to use Boids2D as a sound spatializer.
+CATEGORIES:: Collective Motion
 related:: Classes/BoidUnit3D, Classes/Boids2D, Classes/BoidUnit2D
 
 SECTION:: Using Boids2D to spatialize sound.

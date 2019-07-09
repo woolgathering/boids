@@ -1,18 +1,21 @@
-TITLE:: Boids2D
-summary:: A 2D-optimized flocking algorithm
+TITLE:: BoidsND
+summary:: An N-dimensional Reynolds flocking algorithm
 categories:: Collective Motion
-related:: Classes/BoidUnit2D, Classes/Boids3D, Classes/BoidUnit3D, Guides/Boids2D_spatializerGuide
+related:: Classes/BoidsND, Classes/BoidUnit3D, Classes/Boids2D, Classes/BoidUnit2D
 
 DESCRIPTION::
-Boids2D is an implementation of the Reynolds boids algorithm, optimized for two dimensions. Flock-properties, such as maximum velocity or the weights for the three rules, are Gaussian-distributed such that the mean is the value provided and the standard deviation is that 5% of the mean.
+BoidsND is an implementation of the Reynolds boids algorithm for an arbitrary number of dimensions. Flock-properties, such as maximum velocity or the weights for the three rules, are Gaussian-distributed such that the mean is the value provided and the standard deviation is that 5% of the mean.
 
 CLASSMETHODS::
 
 METHOD:: new
 Create a new flock.
 
+ARGUMENT:: dim
+The number of dimensions of the flock-space. If 2 or 3 is passed, a warning is thrown that one ought to use Boids2D or Boids3D.
+
 ARGUMENT:: numBoids
-Number of members of the flock (BoidUnit2Ds).
+Number of members of the flock.
 
 ARGUMENT:: timestep
 The timestep of each calculation, used internally to calculate a working maximum velocity. When running moveFlock() in a loop, this is the interval of waiting to get movement at speed. If this is set lower than the wait interval in a loop, the flock appears to move in slow motion and visa versa.
@@ -26,17 +29,22 @@ The weight of the inner distance rule. The inner distance rule moves each boid a
 ARGUMENT:: matchVelocity
 The weight of the velocity matching rule. The velocity matching rule applies to thee velocity vector, both magnitude (speed) and angle (direction).
 
-RETURNS:: A Boids2D.
+RETURNS:: A BoidsND.
 
 NOTE::
 centerInstinct, innerDistance, and matchVelocity are the EMPHASIS::mean:: of the flock with all members being Gaussian-distributed. The standard deviation is 5% of the mean.
 ::
 
 CODE::
-f = Boids2D(20, 0.2, 1, 1, 1); // a new flock of 20 members, a timestep of 0.2, and each rule having a mean of 1.
+f = BoidsND(5, 20, 0.2, 1, 1, 1); // a new flock in 5 dimension of 20 members, a timestep of 0.2, and each rule having a mean of 1.
 ::
 
 INSTANCEMETHODS::
+
+METHOD:: dim
+The number of dimensions of the flock-space. Not modulable.
+
+RETURNS:: An Integer
 
 METHOD:: addBoid
 Add a new member to the flock.
@@ -44,7 +52,7 @@ Add a new member to the flock.
 ARGUMENT:: initPos
 The initial position. If nil, the boid is added at the center of mass of all the agents.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 METHOD:: removeBoid
 Remove an agent from the flock
@@ -55,22 +63,38 @@ The index of the agent to remove. If nil, the last agent in the list is removed.
 METHOD:: boids
 The list of BoidUnits (agents) in the flock.
 
-RETURNS:: An Array of BoidUnit2D's.
+RETURNS:: An Array of BoidUnitND's.
 
 METHOD:: bounds
 The bounds of the space in which the flock moves in meters.
 
-ARGUMENT:: dim
-The new dimensions in a two element array. [1000, 1000] is a square with 1000 meters on each side such that the range and domain are both +/-500. When using the getter, bounds() would return [[-500,500], [-500,500]]
+RETURNS:: An Array
 
-RETURNS:: An Array (getter) or a Boids2D (setter)
+METHOD:: setAllBoundLengths
+Set all bound sides in all dimensions equal to the argument.
+
+ARGUMENT:: size
+The size in meters of the bounds.
+
+RETURNS:: A BoidsND
+
+METHOD:: setBoundLength
+Set the size of the bound in a single dimension.
+
+ARGUMENT:: dim
+The dimension that one wants to change.
+
+ARGUMENT:: size
+The size in meters of the bounds.
+
+RETURNS:: A BoidsND
 
 METHOD:: wrap
 Boolean on whether or not to wrap the agents in the space. Defaults to false.
 
 ARGUMENT:: boolean
 
-RETURNS:: A Boids2D
+RETURNS:: A Boolean (getter) or a BoidsND (setter)
 
 METHOD:: timestep
 The timestep used in calculating positions relative the maximum velocity.
@@ -78,7 +102,7 @@ The timestep used in calculating positions relative the maximum velocity.
 ARGUMENT:: time
 A Float describing the interval of time with which to calculate the movement of the flock. This can be different than the interval at which moveFlock() is looped such that momentum is preserved when moving in "slow motion".
 
-RETURNS:: A Float (getter) or a Boids2D (setter)
+RETURNS:: A Float (getter) or a BoidsND (setter)
 
 
 
@@ -90,21 +114,21 @@ SUBSECTION::Flocking Rules and Moving the Flock
 METHOD:: centerInstinct
 The weight of the center-seeking rule, Gaussian-distributed.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 DISCUSSION:: The center instinct is the amount of weight each agent gives to moving toward the center of mass of the six nearest members, regardless of their absolute distance. Making this negative causes the agents move away from the center of mass of their neighbors. Often works best close to 0 for a bounded system. When this is set high in an unbounded (wrapped) system, the agents have a tendency to oscillate at the extremes of the space.
 
 METHOD:: innerDistance
 The weight of the inner distance rule, Gaussian-distributed.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 DISCUSSION::The inner distance rule moves each agent away from one another such that they maintain some distance from one another. Making this negative attracts the agents to each other.
 
 METHOD:: matchVelocity
 The weight of the velocity-matching rule, Gaussian-distributed. The velocity is matched in both speed and direction.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 DISCUSSION::The inner distance rule moves each agent away from one another such that they maintain some distance from one another. Making this negative attracts the agents to each other.
 
@@ -114,7 +138,7 @@ The maximum velocity of the agents in meters per second; defaults to 100 m/s. Th
 ARGUMENT:: val
 Speed in meters per second.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 METHOD:: minSpace
 The minimum space between agents in meters, Gaussian-distributed.
@@ -122,7 +146,7 @@ The minimum space between agents in meters, Gaussian-distributed.
 ARGUMENT:: val
 The minimum space between agents in meters.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 DISCUSSION::Neighboring agents within this distance from one another will move away from each other; agents outside of this radius have no effect. Note that this amount can be overcome by other forces, for instance if a very strong attractor is present.
 
@@ -130,9 +154,9 @@ METHOD:: moveFlock
 The method that, when called, calculates the new velocity vectors and adds them to the positions. The func argument is evaluated EMPHASIS::after:: all other operations and the boids have been moved.
 
 ARGUMENT:: func
-A Function that is called after evaluation of the new positions. It is passed this instance of Boids2D.
+A Function that is called after evaluation of the new positions. It is passed this instance of BoidsND.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 CODE::
 // move the flock and post its new center of mass
@@ -157,25 +181,32 @@ An array of the targets. Each target is a Dictionary of two elements: \pos and \
 RETURNS:: An Array of Dictionaries
 
 METHOD:: addTarget
-Add a target. Each target is a Dictionary containing two elements: \pos (A RealVector2D of the x and y position) and \strength (a Float of the strength of the target).
+Add a target. Each target is a Dictionary containing two elements: \pos (a RealVector of the coordinates in the dimensions) and \strength (a Float of the strength of the target).
 
 ARGUMENT:: pos
-An Array that describes the position of the target in (x,y). This is converted internally to a RealVector2D.
+An Array that describes the position of the target. The array must be equal to the number of dimensions.
 
 ARGUMENT:: gravity
-A Float describing the strength of the target.
+A Float or Array of Floats (same size as number of dimensions) describing the strength of the target.
 
-RETURNS:: A Boids2D
+NOTE::In BoidsND, it is possible to specify unique gravities in dimensions by passing an array the same size as the number of dimensions. For instance, in a 5-dimensional space the gravity could be specified as CODE::[3,2,0,0,6]:: where the gravity is 3 in dimension 0, 2 in dimension 1, etc. Using this it is possible to specify gravity along a line. Unfortunately, this is not yet reflected in the visualizer.::
+
+RETURNS:: A BoidsND
 
 NOTE::
-Internally, the position is converted from an Array to a RealVector2D to speed up computation. Likewise, the Dictionary created stores the gravity value as strength for cleaner code in the class.
+The Dictionary created stores the gravity value as strength for cleaner code in the class. The CODE::pos:: EMPHASIS::must:: be an Array of equal size to the number of dimensions.
 
 The EMPHASIS::field:: of the gravity falls off at a rate of 1/EMPHASIS::r:: where EMPHASIS::r:: is the radius in meters.
 ::
 
 CODE::
-f.addTarget([rand(200), rand(200)], rrand(1,3)); // add a target randomly
-f.targets[0].postln; // prints Dictionary[ (pos -> RealVector2D[ 91, 27 ]), (strength -> 2) ]
+f = BoidsND(5, 20); // a new flock in five dimensions
+f.addTarget(Array.fill(5, {rand(200)}), 3); // add a target randomly
+f.targets[0].postln; // prints Dictionary[ (pos -> RealVector[ 58, 85, 36, 34, 163 ]), (strength -> 3) ]
+
+// add another with variable gravity
+f.addTarget(Array.fill(5, {rand(200)}), Array.fill(5, {rand(5)})); // add a target randomly
+f.targets[1].postln; // prints Dictionary[ (pos -> RealVector[ 111, 192, 120, 162, 151 ]), (strength -> [ 2, 4, 0, 0, 0 ]) ]
 ::
 
 METHOD:: editTarget
@@ -190,7 +221,7 @@ The position of the target. If this is nil, the position remains the same.
 ARGUMENT:: gravity
 The gravity of the target. If this is nil, the gravity remains the same.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 METHOD:: removeTarget
 Remove a target
@@ -201,34 +232,45 @@ The index of the target in the list of targets to remove. If index is nil, remov
 METHOD:: clearTargets
 Clear the list of targets.
 
-RETURNS:: a Boids2D
+RETURNS:: a BoidsND
 
 
 METHOD:: obstacles
-An array of the obstacles. Each target is a Dictionary of two elements: \pos and \strength.
+An array of the obstacles. Each obstacle is a Dictionary of two elements: \pos and \strength.
 
 RETURNS:: An Array of Dictionaries
 
 METHOD:: addObstacle
-Add a target. Each target is a Dictionary containing two elements: \pos (A RealVector2D of the x and y position) and \strength (a Float of the strength of the target).
+Add an obstacle. Each obstacle is a Dictionary containing two elements: \pos (a RealVector of the coordinates in the dimensions) and \strength (a Float of the repulsion of the obstacle).
 
 ARGUMENT:: pos
-An Array that describes the position of the target in (x,y). This is converted internally to a RealVector2D.
+An Array that describes the position of the obstacle. The array must be equal to the number of dimensions.
 
 ARGUMENT:: repulsion
-A Float describing the repulsion of the obstacle.
+A Float or Array of Floats (same size as number of dimensions) describing the repulsion of the obstacle.
 
-RETURNS:: A Boids2D
+NOTE::In BoidsND, it is possible to specify unique repulsions in dimensions by passing an array the same size as the number of dimensions. For instance, in a 5-dimensional space the repulsion could be specified as CODE::[3,2,0,0,6]:: where the gravity is 3 in dimension 0, 2 in dimension 1, etc. Using this it is possible to specify repulsion along a line (but not a wall, yet). Unfortunately, this is not yet reflected in the visualizer. It is also much harder to work with obstacles in higher dimensional spaces due to the degrees of freedom possible.
+::
+
+RETURNS:: A BoidsND
 
 NOTE::
-Internally, the position is converted from an Array to a RealVector2D to speed up computation. Likewise, the Dictionary created stores the repulsion value as strength for cleaner code in the class.
+The Dictionary created stores the repulsion value as strength for cleaner code in the class. The CODE::pos:: EMPHASIS::must:: be an Array of equal size to the number of dimensions.
 
 The EMPHASIS::field:: of repulsion falls off at a rate of 1/EMPHASIS::r^2:: where EMPHASIS::r:: is the radius in meters.
 ::
 
+
+
+
 CODE::
-f.addObstacle([rand(200), rand(200)], rrand(1,3)); // add a target randomly
-f.targets[0].postln; // prints Dictionary[ (pos -> RealVector2D[ 91, 27 ]), (strength -> 2) ]
+f = BoidsND(5, 20); // a new flock in five dimensions
+f.addObstacle(Array.fill(5, {rand(200)}), 3); // add an obstacle randomly
+f.obstacles[0].postln; // prints Dictionary[ (pos -> RealVector[ 24, 193, 189, 148, 198 ]), (strength -> 3) ]
+
+// add another with variable gravity
+f.addObstacle(Array.fill(5, {rand(200)}), Array.fill(5, {rand(5)})); // add a obstacle randomly
+f.obstacles[1].postln; // prints Dictionary[ (pos -> RealVector[ 52, 82, 95, 98, 115 ]), (strength -> [ 3, 3, 3, 3, 4 ]) ]
 ::
 
 METHOD:: editObstacle
@@ -243,7 +285,7 @@ The position of the obstacle. If this is nil, the position remains the same.
 ARGUMENT:: repulsion
 The gravity of the obstacle. If this is nil, the gravity remains the same.
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 METHOD:: removeObstacle
 Remove a obstacle.
@@ -254,7 +296,8 @@ The index of the obstacle in the list of obstacles to remove. If index is nil, r
 METHOD:: clearObstacles
 Clear the list of obstacles.
 
-RETURNS:: a Boids2D
+RETURNS:: a BoidsND
+
 
 
 
@@ -273,25 +316,19 @@ SUBSECTION:: Attributes of the flock
 METHOD:: centerOfMass
 The position of the center of mass of the flock.
 
-RETURNS:: A RealVector2D
+RETURNS:: A RealVector
 
 METHOD:: centerOfVel
 The average velocity of the flock.
 
-RETURNS:: A RealVector2D
+RETURNS:: A RealVector
 
 METHOD:: boids
 The array of BoidUnits; i.e. an array of the agents in the flock.
 
 RETURNS:: An Array
 
-METHOD:: getPanVals
-A convenience method that RETURNS an array of two-element arrays of values useful for use as a panner in the form [dist, angle] where EMPHASIS::dist:: is the distance from the origin in meters and EMPHASIS::angle:: is the angle about the origin in radians. Also see BoidUnit2D.getPanVals.
-
 WARNING:: For math reasons, positive motion is EMPHASIS::counterclockwise:: while negative motion is EMPHASIS::clockwise::.::
-
-RETURNS:: An Array
-
 
 METHOD:: sizeOfFlock
 A convenience method to return the size of the flock. Identical to numBoids().
@@ -306,13 +343,16 @@ RETURNS:: An Integer
 METHOD:: visualizer
 Show a visualization of the flock. The agents are shown as wedges with the point being the position and the angle being the angle of the velocity. Targets are shown as blue circles and obstacles as red circles.
 
+ARGUMENT:: whichDimensions
+A two-element array specifying which dimensions to project.
+
 ARGUMENT:: showLabels
 A Boolean, defaults to false. If true, the index of the agent/target/obstacle is positioned along with the wedge or circle.
 
 ARGUMENT:: returnWindow
 A Boolean, defaults to false. If true, return the Window instead of the instance.
 
-RETURNS:: A Boids2D or a Window.
+RETURNS:: A BoidsND or a Window.
 
 METHOD:: info
 Print some basic info about the flock. Will probably be removed in the future.
@@ -320,6 +360,7 @@ Print some basic info about the flock. Will probably be removed in the future.
 code::
 // f.info prints
 Boid Info::::
+  dim: 5
 	numBoids: 20
 	timestep: 0.2 s
 	centerInstinct: 0
@@ -329,7 +370,7 @@ Boid Info::::
 	minSpace: 1 m
 ::
 
-RETURNS:: A Boids2D
+RETURNS:: A BoidsND
 
 
 
@@ -337,13 +378,13 @@ RETURNS:: A Boids2D
 EXAMPLES::
 
 code::
-f = Boids2D.new(20, 0.1); // a new flock
+f = BoidsND.new(5, 20, 0.1); // a new flock
 f.maxVelocity = 150; // speed it up
 x = {|flock|
   flock.boids[0].pos.postln; // print the position of the first boid
 };
 
-{f.moveFlock}.bench; // move it manually. It's pretty fast.
+{f.moveFlock}.bench; // move it manually. Slower than the optimized versions even in the same number of dimensions.
 
 r = fork {
   loop {
@@ -352,12 +393,18 @@ r = fork {
   };
 };
 
-f.visualizer(false); // a visualizer without the labels
+// now show the flock. Labeling is one to more easily show which agents are which in the different plots.
+f.visualizer([0,1], true); // a visualizer showing the zeroth and first dimensions.
+f.visualizer([2,1], true); // now look at the flock from a different angle with the first dimension along the same axis
 
-f.addTarget([0,0], 1); // add a target at the origin with a gravity of 1
-f.addObstacle([100,-100], 2); // add an obstacle at (100,-100) with a repulsion of 2
+// do some targeting
+f.addTarget([0,0,0,0,0], 3); // add a target at the origin with a gravity of 1
+f.addObstacle([100,-100,150,100,-200], 2); // add an obstacle with a repulsion of 2
 f.innerDistance = 5; // make them like each other less
-f.matchVelocity = 0; // no velocity matching
+
+f.removeTarget; // remove the only target
+f.addTarget([0,0,0,0,0], [5,0,0,0,0]); // add a new target as a line at x = 0
+f.matchVelocity = 0; // no velocity matching (i.e. decorrelate)
 
 r.stop; // stop the loop and thus, stop the flock
 

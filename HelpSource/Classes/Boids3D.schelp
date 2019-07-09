@@ -61,7 +61,7 @@ METHOD:: bounds
 The bounds of the space in which the flock moves in meters.
 
 ARGUMENT:: dim
-The new dimensions in a two element array. [1000, 1000] is a square with 1000 meters on each side such that the range and domain are both +/-500. When using the getter, bounds() would return [[-500,500], [-500,500]]
+The new dimensions in a three element array. [1000, 1000, 1000] is a cube with 1000 meters on each side such that the range and domain are both +/-500. When using the getter, bounds() would return [[-500,500], [-500,500],[-500,500]].
 
 RETURNS:: An Array (getter) or a Boids3D (setter)
 
@@ -276,6 +276,11 @@ The position of the center of mass of the flock.
 
 RETURNS:: A RealVector3D
 
+METHOD:: centerOfVel
+The average velocity of the flock.
+
+RETURNS:: A RealVector3D
+
 METHOD:: boids
 The array of BoidUnits; i.e. an array of the agents in the flock.
 
@@ -302,6 +307,9 @@ RETURNS:: An Integer
 
 METHOD:: visualizer
 Show a visualization of the flock. The agents are shown as wedges with the point being the position and the angle being the angle of the velocity. Targets are shown as blue circles and obstacles as red circles.
+
+ARGUMENT:: whichDimensions
+A two-element array specifying which dimensions to project.
 
 ARGUMENT:: showLabels
 A Boolean, defaults to false. If true, the index of the agent/target/obstacle is positioned along with the wedge or circle.
@@ -334,23 +342,25 @@ RETURNS:: A Boids3D
 EXAMPLES::
 
 code::
-f = Boids3D.new(20, 0.2); // a new flock
+f = Boids3D.new(20, 0.1); // a new flock
 f.maxVelocity = 150; // speed it up
 x = {|flock|
   flock.boids[0].pos.postln; // print the position of the first boid
 };
 
+{f.moveFlock}.bench; // move it manually. It's pretty fast.
+
 r = fork {
   loop {
     f.moveFlock(x); // move the flock and evaluate x each time
-    0.2.wait; // wait a bit (timestep)
+    0.1.wait; // wait a bit (timestep)
   };
 };
 
-f.visualizer(false); // a visualizer without the labels
+f.visualizer([0,1]); // a visualizer without the labels projecting the x and y axis
 
 f.addTarget([0,0,0], 1); // add a target at the origin with a gravity of 1
-f.addObstacle([100,-100,150], 2); // add an obstacle at (100,-100) with a repulsion of 2
+f.addObstacle([100,-100,150], 2); // add an obstacle at (100,-100,150) with a repulsion of 2
 f.innerDistance = 5; // make them like each other less
 f.matchVelocity = 0; // no velocity matching
 
