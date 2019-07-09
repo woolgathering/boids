@@ -1,9 +1,9 @@
 (
-	\name:	"Boids",
-	\path:	"Boids",
-	\summary:	"2- and 3D optimized versions of Reynolds' boids algorithms.",
-	\author:	"Jacob Sundstrom",
-	\version:	"0.0.1",
+  \name:	"Boids",
+  \path:	"Boids",
+  \summary:	"2- and 3D optimized versions of Reynolds' boids algorithms.",
+  \author:	"Jacob Sundstrom",
+  \version:	"0.0.1",
   \license: "GNU GPL v3.0",
-	\url:	"https://github.com/woolgathering/boids",
+  \url:	"https://github.com/woolgathering/boids",
 )

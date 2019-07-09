@@ -1,6 +1,6 @@
 # Boids Classes
 
-Repo for 2- and 3D optimized versions of Reynolds' boids algorithms.
+Repo for 2- and 3D optimized versions of Reynolds' boids algorithms. Also included in an N-dimensional implementation that is not optimized.
 
 ## Dependencies
 
