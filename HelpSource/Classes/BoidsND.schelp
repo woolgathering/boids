@@ -1,7 +1,7 @@
 TITLE:: BoidsND
 summary:: An N-dimensional Reynolds flocking algorithm
 categories:: Collective Motion
-related:: Classes/BoidsND, Classes/BoidUnit3D, Classes/Boids2D, Classes/BoidUnit2D
+related:: Classes/Boids3D, Classes/BoidUnit3D, Classes/Boids2D, Classes/BoidUnit2D
 
 DESCRIPTION::
 BoidsND is an implementation of the Reynolds boids algorithm for an arbitrary number of dimensions. Flock-properties, such as maximum velocity or the weights for the three rules, are Gaussian-distributed such that the mean is the value provided and the standard deviation is that 5% of the mean.

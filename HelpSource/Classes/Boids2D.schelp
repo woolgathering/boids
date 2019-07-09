@@ -1,7 +1,7 @@
 TITLE:: Boids2D
 summary:: A 2D-optimized flocking algorithm
 categories:: Collective Motion
-related:: Classes/BoidUnit2D, Classes/Boids3D, Classes/BoidUnit3D, Guides/Boids2D_spatializerGuide
+related:: Classes/BoidUnit2D, Classes/Boids3D, Classes/BoidUnit3D, Classes/BoidsND, Guides/Boids2D_spatializerGuide
 
 DESCRIPTION::
 Boids2D is an implementation of the Reynolds boids algorithm, optimized for two dimensions. Flock-properties, such as maximum velocity or the weights for the three rules, are Gaussian-distributed such that the mean is the value provided and the standard deviation is that 5% of the mean.
