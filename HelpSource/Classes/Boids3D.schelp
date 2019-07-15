@@ -11,6 +11,10 @@ CLASSMETHODS::
 METHOD:: new
 Create a new flock.
 
+NOTE::
+centerInstinct, innerDistance, and matchVelocity are the EMPHASIS::mean:: of the flock with all members being Gaussian-distributed. The standard deviation is 5% of the mean.
+::
+
 ARGUMENT:: numBoids
 Number of members of the flock.
 
@@ -26,11 +30,10 @@ The weight of the inner distance rule. The inner distance rule moves each boid a
 ARGUMENT:: matchVelocity
 The weight of the velocity matching rule. The velocity matching rule applies to thee velocity vector, both magnitude (speed) and angle (direction).
 
+
+
 RETURNS:: A Boids3D.
 
-NOTE::
-centerInstinct, innerDistance, and matchVelocity are the EMPHASIS::mean:: of the flock with all members being Gaussian-distributed. The standard deviation is 5% of the mean.
-::
 
 CODE::
 f = Boids3D(20, 0.2, 1, 1, 1); // a new flock of 20 members, a timestep of 0.2, and each rule having a mean of 1.
