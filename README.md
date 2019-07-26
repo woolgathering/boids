@@ -4,7 +4,7 @@ Repo for 2- and 3D optimized versions of Reynolds' boids algorithms. Also includ
 
 ## Dependencies
 
-My fork of [VectorSpace](https://github.com/woolgathering/VectorSpace).
+[VectorSpace](https://github.com/supercollider-quarks/VectorSpace).
 
 ## What does it look like?
 
