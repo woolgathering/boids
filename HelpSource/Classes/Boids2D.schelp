@@ -106,7 +106,7 @@ The weight of the velocity-matching rule, Gaussian-distributed. The velocity is 
 
 RETURNS:: A Boids2D
 
-DISCUSSION::The inner distance rule moves each agent away from one another such that they maintain some distance from one another. Making this negative attracts the agents to each other.
+DISCUSSION::The velocity matching rule moves each agent causes each agent to align in terms of direction and speed with its six nearest neighbors, regardless of their absolute distance. Setting this to 0 causes the agents to ignore one another, resulting in something that more closely resembles a swarm of insects.
 
 METHOD:: maxVelocity
 The maximum velocity of the agents in meters per second; defaults to 100 m/s. This is adjusted internally to a working maximum velocity and is Gaussian-distributed.
@@ -286,9 +286,9 @@ The array of BoidUnits; i.e. an array of the agents in the flock.
 RETURNS:: An Array
 
 METHOD:: getPanVals
-A convenience method that RETURNS an array of two-element arrays of values useful for use as a panner in the form [dist, angle] where EMPHASIS::dist:: is the distance from the origin in meters and EMPHASIS::angle:: is the angle about the origin in radians. Also see BoidUnit2D.getPanVals.
+A convenience method that returns an array of two-element arrays of values useful for use as a panner in the form [dist, angle] where EMPHASIS::dist:: is the distance from the origin in meters and EMPHASIS::angle:: is the angle about the origin in radians. Also see BoidUnit2D.getPanVals.
 
-WARNING:: For math reasons, positive motion is EMPHASIS::counterclockwise:: while negative motion is EMPHASIS::clockwise::.::
+WARNING:: For math reasons, positive motion is EMPHASIS::counterclockwise:: while negative motion is EMPHASIS::clockwise::. Likewise, 0 radians is at 3 o'clock.::
 
 RETURNS:: An Array
 
