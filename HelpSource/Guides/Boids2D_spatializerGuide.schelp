@@ -55,7 +55,6 @@ r = Routine({
 b.visualizer; // let's see it. Black wedges are the boids, red circles are the targets.
 
 r.stop; // stop the loop (you can also resume by just calling again)
-b.free; // free the flock (clears up stuff, stops any routines)
 ::
 
 SECTION:: Other Cool Stuff

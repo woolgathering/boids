@@ -10,24 +10,18 @@ CLASSMETHODS::
 
 METHOD:: new
 Create a new flock.
-
 ARGUMENT:: numBoids
 Number of members of the flock (BoidUnit2Ds).
-
 ARGUMENT:: timestep
 The timestep of each calculation, used internally to calculate a working maximum velocity. When running moveFlock() in a loop, this is the interval of waiting to get movement at speed. If this is set lower than the wait interval in a loop, the flock appears to move in slow motion and visa versa.
-
 ARGUMENT:: centerInstinct
 The weight of the center instinct rule. The center instinct is the amount of weight each boid gives to moving toward the center of mass of the entire flock. Making this negative makes the boids move away from the center of mass. Often works best at 0 for a bounded system.
-
 ARGUMENT:: innerDistance
 The weight of the inner distance rule. The inner distance rule moves each boid away from one another such that they maintain some distance from one another. Making this negative attracts the boids to each other.
-
 ARGUMENT:: matchVelocity
 The weight of the velocity matching rule. The velocity matching rule applies to thee velocity vector, both magnitude (speed) and angle (direction).
-
 RETURNS:: A Boids2D.
-
+DISCUSSION::
 NOTE::
 centerInstinct, innerDistance, and matchVelocity are the EMPHASIS::mean:: of the flock with all members being Gaussian-distributed. The standard deviation is 5% of the mean.
 ::
@@ -40,44 +34,34 @@ INSTANCEMETHODS::
 
 METHOD:: addBoid
 Add a new member to the flock.
-
 ARGUMENT:: initPos
 The initial position. If nil, the boid is added at the center of mass of all the agents.
-
 RETURNS:: A Boids2D
 
 METHOD:: removeBoid
 Remove an agent from the flock
-
 ARGUMENT:: index
 The index of the agent to remove. If nil, the last agent in the list is removed.
 
 METHOD:: boids
 The list of BoidUnits (agents) in the flock.
-
 RETURNS:: An Array of BoidUnit2D's.
 
 METHOD:: bounds
 The bounds of the space in which the flock moves in meters.
-
 ARGUMENT:: dim
 The new dimensions in a two element array. [1000, 1000] is a square with 1000 meters on each side such that the range and domain are both +/-500. When using the getter, bounds() would return [[-500,500], [-500,500]]
-
 RETURNS:: An Array (getter) or a Boids2D (setter)
 
 METHOD:: wrap
 Boolean on whether or not to wrap the agents in the space. Defaults to false.
-
 ARGUMENT:: boolean
-
 RETURNS:: A Boids2D
 
 METHOD:: timestep
 The timestep used in calculating positions relative the maximum velocity.
-
 ARGUMENT:: time
 A Float describing the interval of time with which to calculate the movement of the flock. This can be different than the interval at which moveFlock() is looped such that momentum is preserved when moving in "slow motion".
-
 RETURNS:: A Float (getter) or a Boids2D (setter)
 
 
@@ -85,27 +69,21 @@ RETURNS:: A Float (getter) or a Boids2D (setter)
 
 
 
-SUBSECTION::Flocking Rules and Moving the Flock
+ANCHOR:: SUBSECTION::Flocking Rules and Moving the Flock
 
 METHOD:: centerInstinct
 The weight of the center-seeking rule, Gaussian-distributed.
-
 RETURNS:: A Boids2D
-
 DISCUSSION:: The center instinct is the amount of weight each agent gives to moving toward the center of mass of the six nearest members, regardless of their absolute distance. Making this negative causes the agents move away from the center of mass of their neighbors. Often works best close to 0 for a bounded system. When this is set high in an unbounded (wrapped) system, the agents have a tendency to oscillate at the extremes of the space.
 
 METHOD:: innerDistance
 The weight of the inner distance rule, Gaussian-distributed.
-
 RETURNS:: A Boids2D
-
 DISCUSSION::The inner distance rule moves each agent away from one another such that they maintain some distance from one another. Making this negative attracts the agents to each other.
 
 METHOD:: matchVelocity
 The weight of the velocity-matching rule, Gaussian-distributed. The velocity is matched in both speed and direction.
-
 RETURNS:: A Boids2D
-
 DISCUSSION::The velocity matching rule moves each agent causes each agent to align in terms of direction and speed with its six nearest neighbors, regardless of their absolute distance. Setting this to 0 causes the agents to ignore one another, resulting in something that more closely resembles a swarm of insects.
 
 METHOD:: maxVelocity
