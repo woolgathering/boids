@@ -64,6 +64,10 @@ ARGUMENT:: time
 A Float describing the interval of time with which to calculate the movement of the flock. This can be different than the interval at which moveFlock() is looped such that momentum is preserved when moving in "slow motion".
 RETURNS:: A Float (getter) or a Boids2D (setter)
 
+METHOD:: sd
+The standard deviation in decimal percent for the agents in the flock. Defaults to 0.05 (5%).
+RETURNS:: A Float (getter) or a Boids2D (setter)
+DISCUSSION:: NOTE::When this is set, the instincts for each agent are recalculated with the new value.::
 
 
 
@@ -74,7 +78,7 @@ ANCHOR:: SUBSECTION::Flocking Rules and Moving the Flock
 METHOD:: centerInstinct
 The weight of the center-seeking rule, Gaussian-distributed.
 RETURNS:: A Boids2D
-DISCUSSION:: The center instinct is the amount of weight each agent gives to moving toward the center of mass of the six nearest members, regardless of their absolute distance. Making this negative causes the agents move away from the center of mass of their neighbors. Often works best close to 0 for a bounded system. When this is set high in an unbounded (wrapped) system, the agents have a tendency to oscillate at the extremes of the space.
+DISCUSSION:: The center instinct is the amount of weight each agent gives to moving toward the center of mass of the six nearest members, regardless of their absolute distance (Ballerini, M et al. "Interaction ruling animal collective behavior depends on topological rather than metric distance: Evidence from a field study" (2008)). Making this negative causes the agents move away from the center of mass of their neighbors. Often works best close to 0 for a bounded system. When this is set high in an unbounded (wrapped) system, the agents have a tendency to oscillate at the extremes of the space.
 
 METHOD:: innerDistance
 The weight of the inner distance rule, Gaussian-distributed.
@@ -84,7 +88,7 @@ DISCUSSION::The inner distance rule moves each agent away from one another such 
 METHOD:: matchVelocity
 The weight of the velocity-matching rule, Gaussian-distributed. The velocity is matched in both speed and direction.
 RETURNS:: A Boids2D
-DISCUSSION::The velocity matching rule moves each agent causes each agent to align in terms of direction and speed with its six nearest neighbors, regardless of their absolute distance. Setting this to 0 causes the agents to ignore one another, resulting in something that more closely resembles a swarm of insects.
+DISCUSSION::The velocity matching rule moves each agent causes each agent to align in terms of direction and speed with its six nearest neighbors, regardless of their absolute distance (Ballerini, M et al. "Interaction ruling animal collective behavior depends on topological rather than metric distance: Evidence from a field study" (2008)). Setting this to 0 causes the agents to ignore one another, resulting in something that more closely resembles a swarm of insects.
 
 METHOD:: maxVelocity
 The maximum velocity of the agents in meters per second; defaults to 100 m/s. This is adjusted internally to a working maximum velocity and is Gaussian-distributed.

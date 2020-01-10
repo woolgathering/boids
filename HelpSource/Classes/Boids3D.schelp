@@ -77,11 +77,14 @@ RETURNS:: A Boolean (getter) or a Boids3D (setter)
 
 METHOD:: timestep
 The timestep used in calculating positions relative the maximum velocity.
-
 ARGUMENT:: time
 A Float describing the interval of time with which to calculate the movement of the flock. This can be different than the interval at which moveFlock() is looped such that momentum is preserved when moving in "slow motion".
-
 RETURNS:: A Float (getter) or a Boids3D (setter)
+
+METHOD:: sd
+The standard deviation in decimal percent for the agents in the flock. Defaults to 0.05 (5%).
+RETURNS:: A Float (getter) or a Boids2D (setter)
+DISCUSSION:: NOTE::When this is set, the instincts for each agent are recalculated with the new value.::
 
 
 
