@@ -524,7 +524,7 @@ BoidUnit3D {
         diff = object.at(\pos)-pos; // get the diff
         if(object.at(\strength).isArray) {
           reweighted = 3.collect{|i| // if gravity is an array, apply gravities in specific dimensions
-            ((object.at(\strength)[i]*100)/diff[i]).max(0); // 1/r
+            ((object.at(\strength)[i]*100)/diff[i].abs).max(0); // 1/r
           };
           gravity = RealVector3D.newFrom(reweighted); // get the vector
         } { // else it's an integer so apply it evenly
@@ -535,7 +535,7 @@ BoidUnit3D {
         diff = pos-object.at(\pos); // get the diff
         if(object.at(\strength).isArray) {
           reweighted = 3.collect{|i| // if gravity is an array, apply gravities in specific dimensions
-            ((object.at(\strength)[i]*10000)/diff[i]).max(0); // 1/r
+            ((object.at(\strength)[i]*10000)/diff[i].abs).max(0); // 1/r
           };
           gravity = RealVector3D.newFrom(reweighted); // get the vector
         } { // else it's an integer so apply it evenly
