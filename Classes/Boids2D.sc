@@ -17,7 +17,7 @@
 Boids2D {
   var <numBoids, <timestep, <centerInstinct, <innerDistance, <matchVelocity, <centerOfMass, <centerOfVel;
   var >boidList, <maxVelocity, workingMaxVelocity, <minSpace, targets, obstacles;
-  var <bounds, <wrap;
+  var <bounds, <wrap, <sd;
 
   *new {|numBoids = 10, timestep = 0.5, centerInstinct = 1, innerDistance = 1, matchVelocity = 1|
     ^super.newCopyArgs(numBoids, timestep, centerInstinct, innerDistance, matchVelocity).init;
@@ -30,6 +30,7 @@ Boids2D {
     minSpace = 10; // minmum distance between boids in a flock in meters
     centerOfMass = RealVector2D.zero; // init center of mass at the origin
     bounds = [[-500,500], [-500,500]]; // set the default bounds
+    sd = 0.05; // standard deviation in percent of mean
     this.prFillBoidList(numBoids); // fill the list with boids
     targets = List.new(0);
     obstacles = List.new(0);
@@ -38,7 +39,8 @@ Boids2D {
 
   // optimized version of the rules
   prDoRules {
-    var posSum = RealVector2D.zero, velSum = RealVector2D.zero;
+    var posSum = RealVector2D.zero, velSum = RealVector2D.zero, sizeOfNeighbors;
+    sizeOfNeighbors = clip(numBoids-1, 1, 6); // get at most 6. If less, get all (but not itself)
 
     // for each boidUnit...
     boidList.do{|thisBoid, i|
@@ -80,23 +82,23 @@ Boids2D {
 
       // for rules 1 and 3
       neighbors.sortBy(\dist); // sort neighbors by distance
-      nearestNeighbors = 6.collect{|j|
-        // get the 6 nearest neighbors, regardless of distance
+      nearestNeighbors = sizeOfNeighbors.collect{|j|
+        // get the 6 nearest neighbors, regardless of distance (Ballerini, M et al. "Interaction ruling animal collective behavior depends on topological rather than metric distance: Evidence from a field study" (2008))
         [neighbors[j].at(\pos), neighbors[j].at(\vel)];
       };
       nearestNeighbors = nearestNeighbors.flop; // [positions, velocities]
 
       //////// RULE 1 ////////////////////////////////////
       // for the six nearest, get their average positions and velocities
-      posAvg = nearestNeighbors[0].sum/6; // sum and divide
-      thisBoid.centerOfMass = thisBoid.instincts.at(\centerInstinct) * posAvg * 0.01; // set it for rule 1
+      posAvg = nearestNeighbors[0].sum/sizeOfNeighbors; // sum and divide
+      thisBoid.centerOfMass = thisBoid.instincts.at(\centerInstinct) * posAvg * 0.001; // set it for rule 1
 
       //////// RULE 2 ////////////////////////////////////
       vec = vec/count; // average the vector
       thisBoid.innerDistance = thisBoid.instincts.at(\innerDistance) * vec; // set the innerDistance vector in each BoidUnit
 
       //////// RULE 3 ////////////////////////////////////
-      velAvg = nearestNeighbors[1].sum/6;
+      velAvg = nearestNeighbors[1].sum/sizeOfNeighbors;
       thisBoid.matchVelocity = thisBoid.instincts.at(\matchVelocity) * velAvg; // send one eigth of the magnitude
     };
 
@@ -107,7 +109,7 @@ Boids2D {
   prFillBoidList {|num|
     num.do{
       var boid;
-      boid = BoidUnit2D.rand(bounds, centerInstinct, innerDistance, matchVelocity, gauss(workingMaxVelocity, workingMaxVelocity*0.1));
+      boid = BoidUnit2D.rand(bounds, centerInstinct, innerDistance, matchVelocity, minSpace, workingMaxVelocity, sd);
       boidList.add(boid); // add it to the list
     };
   }
@@ -116,23 +118,22 @@ Boids2D {
     var boid, initVel;
     initPos = initPos ? centerOfMass; // place it near the center of the flock
     initVel = centerOfVel; // give it the average velocity of the flock
-    boid = BoidUnit2D.new(initVel, initPos, bounds, centerOfMass, gauss(workingMaxVelocity, workingMaxVelocity*0.1));
+    boid = BoidUnit2D.new(initVel, initPos, bounds, centerInstinct, innerDistance, matchVelocity, minSpace, workingMaxVelocity, sd);
     boidList.add(boid); // add it
     numBoids = numBoids + 1; // increment numBoids
-
-    // set the instinct attributes
-    boid.centerInstinct = gauss(centerInstinct, centerInstinct*0.05);
-    boid.innerDistance = gauss(innerDistance, innerDistance*0.05);
-    boid.matchVelocity = gauss(matchVelocity, matchVelocity*0.05);
   }
 
   removeBoid {|index|
-    if (index.isNil) {
-      boidList.pop; // if no arg, remove the last BoidUnit
+    if(numBoids==1) {
+      "Cannot have a flock with no agents!".warn;
     } {
-      boidList.removeAt(index); // else, remove at the index
+      if (index.isNil) {
+        boidList.pop; // if no arg, remove the last BoidUnit
+        } {
+          boidList.removeAt(index); // else, remove at the index
+        };
+        numBoids = numBoids - 1; // decrement numBoids
     };
-    numBoids = numBoids - 1; // decrement numBoids
   }
 
   sizeOfFlock {
@@ -166,7 +167,6 @@ Boids2D {
     var rect, xLen, yLen;
     if(dim.isArray) {
       if(dim.size==2) {
-        // we're good
         xLen = dim[0];
         yLen = dim[1];
       };
@@ -178,7 +178,6 @@ Boids2D {
     // create the bounds of a rectangle with the given dimensions with the origin at the center
     rect = [[-0.5*xLen, 0.5*xLen], [-0.5*yLen, 0.5*yLen]];
     bounds = rect; // set the new bounds
-    // set the bounds in each BoidUnit
     boidList.do{|boid|
       boid.bounds = bounds; // set it in each Boid
     };
@@ -249,55 +248,6 @@ Boids2D {
     str = str ++ "\tmaxVelocity: % m/s\n".format(maxVelocity);
     str = str ++ "\tminSpace: % m\n".format(minSpace);
     str.postln; // print it
-  }
-
-  /////////////////////////////////
-  // custom setter methods
-  /////////////////////////////////
-  maxVelocity_ {|val|
-    maxVelocity = val; // maxVelocity is the maximum length of the velocity vector
-    workingMaxVelocity = maxVelocity * timestep;
-    boidList.do{|boid|
-      boid.maxVelocity = gauss(workingMaxVelocity, workingMaxVelocity*0.1); // set it in each individual boid
-    };
-  }
-
-  minSpace_ {|val|
-    minSpace = val;
-    boidList.do{|boid|
-      boid.instincts.add(\minSpace->gauss(minSpace, minSpace*0.05));
-    };
-  }
-
-  wrap_ {|boolean|
-    wrap = boolean;
-    boidList.do(_.wrap_(boolean));
-  }
-
-  centerInstinct_ {|val|
-    centerInstinct = val; // set it here (the average)
-    boidList.do{|boid|
-      boid.instincts.add(\centerInstinct->gauss(val, val*0.1));
-    };
-  }
-
-  innerDistance_ {|val|
-    innerDistance = val; // set it here (the average)
-    boidList.do{|boid|
-      boid.instincts.add(\innerDistance->gauss(val, val*0.1));
-    };
-  }
-
-  matchVelocity_ {|val|
-    matchVelocity = val; // set it here (the average)
-    boidList.do{|boid|
-      boid.instincts.add(\matchVelocity->gauss(val, val*0.1));
-    };
-  }
-
-  // to ensure we return this instance if setting
-  timestep_ {|time|
-    timestep = time;
   }
 
   // visualizer
@@ -372,6 +322,67 @@ Boids2D {
     if(returnWindow) {^window};
   }
 
+  /////////////////////////////////
+  // custom setter methods
+  /////////////////////////////////
+  maxVelocity_ {|val|
+    maxVelocity = val; // maxVelocity is the maximum length of the velocity vector
+    workingMaxVelocity = maxVelocity * timestep;
+    boidList.do{|boid|
+      boid.maxVelocity = gauss(workingMaxVelocity, workingMaxVelocity*sd); // set it in each individual boid
+    };
+  }
+
+  minSpace_ {|val|
+    minSpace = val;
+    boidList.do{|boid|
+      boid.instincts.add(\minSpace->gauss(minSpace, minSpace*sd));
+    };
+  }
+
+  wrap_ {|boolean|
+    wrap = boolean;
+    boidList.do(_.wrap_(boolean));
+  }
+
+  centerInstinct_ {|val|
+    centerInstinct = val; // set it here (the average)
+    boidList.do{|boid|
+      boid.instincts.add(\centerInstinct->gauss(val, val*sd));
+    };
+  }
+
+  innerDistance_ {|val|
+    innerDistance = val; // set it here (the average)
+    boidList.do{|boid|
+      boid.instincts.add(\innerDistance->gauss(val, val*sd));
+    };
+  }
+
+  matchVelocity_ {|val|
+    matchVelocity = val; // set it here (the average)
+    boidList.do{|boid|
+      boid.instincts.add(\matchVelocity->gauss(val, val*sd));
+    };
+  }
+
+  // to ensure we return this instance if setting
+  timestep_ {|time|
+    timestep = time;
+  }
+
+  // reset all the values in the boids with the new standard deviation
+  sd_ {|value|
+    sd = value;
+    boidList.do{|boid|
+      boid.maxVelocity = gauss(workingMaxVelocity, workingMaxVelocity*sd);
+      boid.instincts.add(\minSpace->gauss(minSpace, minSpace*sd));
+      boid.instincts.add(\centerInstinct->gauss(centerInstinct, centerInstinct*sd));
+      boid.instincts.add(\innerDistance->gauss(innerDistance, innerDistance*sd));
+      boid.instincts.add(\matchVelocity->gauss(matchVelocity, matchVelocity*sd));
+    };
+  }
+
   /////////////////////////////
   // custom getter methods
   /////////////////////////////
@@ -400,27 +411,32 @@ BoidUnit2D {
   var <>vel, <>pos, <bounds, <centerOfMass, <maxVelocity;
   var <>centerInstinct, <>innerDistance, <>matchVelocity, <>wrap, <>instincts;
 
-  *new {|vel, pos, bounds, centerOfMass, maxVelocity = 5|
-    ^super.newCopyArgs(vel, pos, bounds, centerOfMass, maxVelocity).init;
+  *new {|vel, pos, bounds, centerInstinct, innerDistance, matchVelocity, minSpace, maxVelocity, sd|
+    ^super.newCopyArgs(vel, pos, bounds).init(nil, centerInstinct, innerDistance, matchVelocity, minSpace, maxVelocity, sd);
   }
 
-  *rand {|bounds, centerOfMass, innerDistance, matchVelocity, maxVelocity = 5|
-    ^super.new.init(bounds, centerOfMass, innerDistance, matchVelocity, maxVelocity);
+  *rand {|bounds, centerInstinct, innerDistance, matchVelocity, minSpace, maxVelocity, sd|
+    ^super.new.init(bounds, centerInstinct, innerDistance, matchVelocity, minSpace, maxVelocity, sd);
   }
 
   init {|...args|
     bounds = bounds ? args[0] ? [[-500,500],[-500,500]]; // [ [xmin, xmax], [ymin, ymax]]
     vel = vel ? RealVector2D.newFrom(Array.fill(2, {rrand(0.0,3.0)}));
     pos = pos ? RealVector.rand(2,-1*bounds[0][0], bounds[0][0]).asRealVector2D;
-    maxVelocity = maxVelocity ? args[4] ? 5; // max velocity
+    maxVelocity = maxVelocity ? gauss(args[5], args[5]*args[6]) ? 5; // max velocity
 
-    // if these are not set, set them
-    centerOfMass = args[2] ? RealVector.rand(2,-10,10).asRealVector2D;
-    innerDistance = args[3] ? RealVector.rand(2,-10,10).asRealVector2D;
-    matchVelocity = args[4] ? RealVector.rand(2,-10,10).asRealVector2D;
+    // if these are not set, set them randomly
+    centerOfMass = RealVector.rand(2,-10,10).asRealVector2D;
+    innerDistance = RealVector.rand(2,-10,10).asRealVector2D;
+    matchVelocity = RealVector.rand(2,-10,10).asRealVector2D;
 
-    instincts = Dictionary[\centerInstinct->gauss(1, 0.1), \innerDistance->gauss(1, 0.1), \matchVelocity->gauss(1, 0.1), \minSpace->gauss(10,0.5)]; // individualized weights
-    centerInstinct = centerOfMass/100; // set this here
+    instincts = Dictionary[
+      \centerInstinct->gauss(args[1], args[1]*args[6]),
+      \innerDistance->gauss(args[2], args[2]*args[6]),
+      \matchVelocity->gauss(args[3], args[3]*args[6]),
+      \minSpace->gauss(args[4], args[4]*args[6])
+    ]; // individualized weights
+    // centerInstinct = centerOfMass/100; // set this here
     vel = vel.limit(maxVelocity); // limit the size of the velocity vector
     wrap = wrap ? false; // default to no wrapping
   }
@@ -458,7 +474,7 @@ BoidUnit2D {
   moveBoid {|targets, obstacles|
     if (targets.isEmpty.not) {vel = vel + this.calcTargets(targets)}; // if there are targets, calculate the vector
     if (obstacles.isEmpty.not) {vel = vel + this.calcObstacles(obstacles)}; // if there are obstacles, calculate the vector
-    vel = vel + centerInstinct + innerDistance + matchVelocity; // sum the vectors and get a new velocity
+    vel = vel + centerOfMass + innerDistance + matchVelocity; // sum the vectors and get a new velocity
     if(wrap) {this.prWrap} {this.prBound}; // wrap or bound
     vel = vel.limit(maxVelocity); // speed limit
     pos = pos + vel; // get the new position
@@ -485,17 +501,44 @@ BoidUnit2D {
     ^vec; // return the vector
   }
 
+  // prCalcVec {|object, vec, type|
+  //   var distFromTarget, diff, gravity;
+  //   distFromTarget = pos.dist(object.at(\pos)).max(0.001); // get the distance from the object
+  //   switch (type)
+  //     {\target} {
+  //       diff = object.at(\pos)-pos; // get the diff
+  //       gravity = ((object.at(\strength)*100)/distFromTarget).max(0); // 1/r
+  //     }
+  //     {\obstacle} {
+  //       diff = pos-object.at(\pos); // get the diff
+  //       gravity = this.prInverseSquare(distFromTarget, object.at(\strength)*1000).max(0); // 1/r^2
+  //     };
+  //   ^vec + ((diff/diff.norm)*gravity); // return
+  // }
+
   prCalcVec {|object, vec, type|
-    var distFromTarget, diff, gravity;
-    distFromTarget = pos.dist(object.at(\pos)).max(0.001); // get the distance from the object
+    var distFromObject, diff, gravity, reweighted;
+    distFromObject = pos.dist(object.at(\pos)).max(0.0001); // get the distance from the object
     switch (type)
       {\target} {
         diff = object.at(\pos)-pos; // get the diff
-        gravity = ((object.at(\strength)*100)/distFromTarget).max(0); // 1/r
+        if(object.at(\strength).isArray) {
+          reweighted = 2.collect{|i| // if gravity is an array, apply gravities in specific dimensions
+            ((object.at(\strength)[i]*100)/diff[i].abs).max(0); // 1/r
+          };
+          gravity = RealVector2D.newFrom(reweighted); // get the vector
+        } { // else it's an integer so apply it evenly
+          gravity = ((object.at(\strength)*100)/distFromObject).max(0); // 1/r
+        };
       }
       {\obstacle} {
         diff = pos-object.at(\pos); // get the diff
-        gravity = this.prInverseSquare(distFromTarget, object.at(\strength)*1000).max(0); // 1/r^2
+        if(object.at(\strength).isArray) {
+          reweighted = 2.collect{|i| this.prInverseSquare(diff[i].abs, object.at(\strength)[i]*10000).max(0)}; // check for distance in particular dimensions
+          gravity = RealVector2D.newFrom(reweighted); // get the vector
+        } { // else it's an integer so apply it evenly
+          gravity = this.prInverseSquare(distFromObject, object.at(\strength)*1000).max(0); // 1/r^2
+        };
       };
     ^vec + ((diff/diff.norm)*gravity); // return
   }
@@ -532,7 +575,7 @@ BoidUnit2D {
   centerOfMass_ {|vec|
     centerOfMass = vec; // get the perceived center of mass for this BoidUnit
     // each time we get a new center of mass, recalculate the first vector offset
-    centerInstinct = centerOfMass/100; // get the vector that moves it 1% toward the center of the flock (this can be weighted??)
+    // centerInstinct = centerOfMass/100; // get the vector that moves it 1% toward the center of the flock (this can be weighted??)
   }
 
   maxVelocity_ {|val|
