@@ -179,6 +179,8 @@ Internally, the position is converted from an Array to a RealVector3D to speed u
 The EMPHASIS::field:: of the gravity falls off at a rate of 1/EMPHASIS::r:: where EMPHASIS::r:: is the radius in meters.
 ::
 
+DISCUSSION:: Gravity can also be applied along a line. By giving the CODE::gravity:: argument as an Array of two elements, gravity will be applied to different degrees in those dimensions. For instance, CODE::[0,1,2]:: will apply a gravity of 1 along the y-dimension, a gravity of 0 along the x-dimension, and a gravity of 2 along the z-dimension.
+
 CODE::
 f.addTarget([rand(200), rand(200), rand(200)], rrand(1,3)); // add a target randomly
 f.targets[0].postln; // prints Dictionary[ (pos -> RealVector3D[ 91, 27, 64 ]), (strength -> 2) ]
@@ -231,6 +233,8 @@ Internally, the position is converted from an Array to a RealVector3D to speed u
 
 The EMPHASIS::field:: of repulsion falls off at a rate of 1/EMPHASIS::r^2:: where EMPHASIS::r:: is the radius in meters.
 ::
+
+DISCUSSION:: Repulsion can also be applied along a line. By giving the CODE::repulsion:: argument as an Array of two elements, repulsion will be applied to different degrees in those dimensions. For instance, CODE::[0,1,2]:: will apply a repulsion of 1 along the y-dimension, a repulsion of 0 along the x-dimension, and a repulsion of 2 along the z-axis. Note that because the way movement is calculated, it is possible for the agents to penetrate the barrier with sufficient momentum.
 
 CODE::
 f.addObstacle([rand(200), rand(200), rand(200)], rrand(1,3)); // add a target randomly
